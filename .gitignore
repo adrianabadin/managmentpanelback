@@ -3,3 +3,5 @@ node_modules
 .env
 rsx.json
 dist
+logs
+temp

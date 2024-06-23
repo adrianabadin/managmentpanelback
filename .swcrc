@@ -1,0 +1,22 @@
+{
+    "$schema": "https://swc.rs/schema.json",
+    "jsc": {
+        "parser": {
+          "syntax": "typescript"
+  
+        },"target": "es2016"
+  
+      },
+    "module": {
+    "type": "commonjs"
+   
+    // These are defaults.
+    }
+    // ,
+    // "env": {
+    //     "browserslist": ["> 1% last 2 versions", "not ie 11"],
+    //     "exclude": [ "dist/*.*","*.test.ts"],
+    //     "include": ["*.ts"]
+    // }
+
+   }

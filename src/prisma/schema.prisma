@@ -1,0 +1,348 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mongodb"
+    url      = env("DATABASE_URL")
+}
+
+model Agreements {
+    id            String      @id @default(uuid()) @map("_id")
+    createdAt     DateTime    @default(now())
+    updatedAt     DateTime    @updatedAt
+    name          String      @unique
+    description   String
+    departmentsId String
+    demographyId  String
+    Demography    Demography  @relation(fields: [demographyId], references: [id])
+    Departments   Departments @relation(fields: [departmentsId], references: [id])
+    hash          String?
+}
+
+model Cities {
+    id         String     @id @default(uuid()) @map("_id")
+    createdAt  DateTime   @default(now())
+    updatedAt  DateTime   @updatedAt
+    name       String     @unique
+    stateId    String
+    Demography Demography @relation(fields: [stateId], references: [id])
+    hash       String?
+}
+
+model Demography {
+    id             String           @id @default(uuid()) @map("_id")
+    createdAt      DateTime         @default(now())
+    updatedAt      DateTime         @updatedAt
+    state          String           @unique
+    population     Int
+    description    String
+    politics       String
+    Agreements     Agreements[]
+    Cities         Cities[]
+    FODA           FODA[]
+    Golds          Golds[]
+    IssuesByUser   IssuesByUser[]
+    Tasks          Tasks[]
+    Throbleshuting Throbleshuting[]
+    hash           String?
+    Departments    Departments?     @relation(fields: [departmentsId], references: [id])
+    departmentsId  String?
+}
+
+model Departments {
+    id             String           @id @default(uuid()) @map("_id")
+    createdAt      DateTime         @default(now())
+    updatedAt      DateTime         @updatedAt
+    name           String           @unique
+    description    String
+    usersId        String?
+    demographyId   String?
+    Agreements     Agreements[]
+    responsable    Users?           @relation(fields: [usersId], references: [id])
+    FODA           FODA[]
+    Golds          Golds[]
+    Tasks          Tasks[]
+    Throbleshuting Throbleshuting[]
+    hash           String?
+    Demography     Demography[]
+}
+
+model FODA {
+    id            String       @id @default(uuid()) @map("_id")
+    createdAt     DateTime     @default(now())
+    updatedAt     DateTime     @updatedAt
+    demographyId  String?
+    departmentsId String?
+    Demography    Demography?  @relation(fields: [demographyId], references: [id])
+    Departments   Departments? @relation(fields: [departmentsId], references: [id])
+    Menace        Menace[]
+    Oportunity    Oportunity[]
+    StrategySM    StrategySM[]
+    StrategySO    StrategySO[]
+    StrategyWM    StrategyWM[]
+    StrategyWO    StrategyWO[]
+    Strength      Strength[]
+    Weakness      Weakness[]
+    hash          String?
+
+    @@unique([demographyId, departmentsId])
+}
+
+model FileDescriptor {
+    id                  String             @id @default(uuid()) @map("_id")
+    createdAt           DateTime           @default(now())
+    updatedAt           DateTime           @updatedAt
+    name                String
+    driveId             String
+    description         String
+    issuesByUserId      String?
+    issueInterventionId String?
+    IssuesByUser        IssuesByUser?      @relation(fields: [issuesByUserId], references: [id])
+    IssueIntervention   IssueIntervention? @relation(fields: [issueInterventionId], references: [id])
+    hash                String?
+}
+
+model Golds {
+    id             String       @id @default(uuid()) @map("_id")
+    createdAt      DateTime     @default(now())
+    updatedAt      DateTime     @updatedAt
+    title          String       @unique
+    description    String
+    expirationDate DateTime
+    demographyId   String?
+    departmentsId  String?
+    Demography     Demography?  @relation(fields: [demographyId], references: [id])
+    Departments    Departments? @relation(fields: [departmentsId], references: [id])
+    hash           String?
+}
+
+model IssuesByUser {
+    id                   String              @id @default(uuid()) @map("_id")
+    createdAt            DateTime            @default(now())
+    updatedAt            DateTime            @updatedAt
+    email                String?
+    name                 String
+    lastName             String
+    socialSecurityNumber String
+    phone                String?
+    demographyId         String
+    description          String
+    kindOfIssueId        String
+    issueState           IssueState          @default(pending)
+    email2               String?
+    phone2               String?
+    files                FileDescriptor[]
+    interventions        IssueIntervention[]
+    state                Demography          @relation(fields: [demographyId], references: [id])
+    kind                 KindOfIssue         @relation(fields: [kindOfIssueId], references: [id])
+    hash                 String?
+    user                 Users?              @relation(fields: [usersId], references: [id])
+    usersId              String?
+}
+
+model KindOfIssue {
+    id           String         @id @default(uuid()) @map("_id")
+    createdAt    DateTime       @default(now())
+    updatedAt    DateTime       @updatedAt
+    name         String         @unique
+    text         String
+    IssuesByUser IssuesByUser[]
+    hash         String?
+}
+
+model Menace {
+    id          String   @id @default(uuid()) @map("_id")
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    title       String
+    description String
+    isActive    Boolean  @default(true)
+    fODAId      String
+    FODA        FODA     @relation(fields: [fODAId], references: [id])
+    hash        String?
+}
+
+model Oportunity {
+    id          String   @id @default(uuid()) @map("_id")
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    title       String
+    description String
+    isActive    Boolean  @default(true)
+    fODAId      String
+    FODA        FODA     @relation(fields: [fODAId], references: [id])
+    hash        String?
+}
+
+model Session {
+    id        String   @id @default(uuid()) @map("_id")
+    sid       String   @unique
+    data      String
+    expiresAt DateTime
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    hash      String?
+}
+
+model StrategySM {
+    id          String   @id @default(uuid()) @map("_id")
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    title       String
+    description String
+    isActive    Boolean  @default(true)
+    fODAId      String?
+    FODA        FODA?    @relation(fields: [fODAId], references: [id])
+    hash        String?
+}
+
+model StrategySO {
+    id          String   @id @default(uuid()) @map("_id")
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    title       String
+    description String
+    isActive    Boolean  @default(true)
+    fODAId      String?
+    FODA        FODA?    @relation(fields: [fODAId], references: [id])
+    hash        String?
+}
+
+model StrategyWM {
+    id          String   @id @default(uuid()) @map("_id")
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    title       String
+    description String
+    isActive    Boolean  @default(true)
+    fODAId      String?
+    FODA        FODA?    @relation(fields: [fODAId], references: [id])
+    hash        String?
+}
+
+model StrategyWO {
+    id          String   @id @default(uuid()) @map("_id")
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    title       String
+    description String
+    isActive    Boolean  @default(true)
+    fODAId      String?
+    FODA        FODA?    @relation(fields: [fODAId], references: [id])
+    hash        String?
+}
+
+model Strength {
+    id          String   @id @default(uuid()) @map("_id")
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    isActive    Boolean  @default(true)
+    title       String
+    description String
+    fODAId      String
+    FODA        FODA     @relation(fields: [fODAId], references: [id])
+    hash        String?
+}
+
+model Tasks {
+    id            String      @id @default(uuid()) @map("_id")
+    createdAt     DateTime    @default(now())
+    updatedAt     DateTime    @updatedAt
+    title         String
+    demographyId  String
+    departmentsId String
+    isCompleted   Boolean     @default(false)
+    date          DateTime
+    userId        String
+    brief         String?
+    file          String?
+    flag          Flags
+    Demography    Demography  @relation(fields: [demographyId], references: [id])
+    Departments   Departments @relation(fields: [departmentsId], references: [id])
+    Users         Users       @relation(fields: [userId], references: [id])
+    hash          String?
+}
+
+model Throbleshuting {
+    id            String      @id @default(uuid()) @map("_id")
+    createdAt     DateTime    @default(now())
+    updatedAt     DateTime    @updatedAt
+    name          String      @unique
+    description   String
+    demographyId  String
+    departmentsId String
+    Demography    Demography  @relation(fields: [demographyId], references: [id])
+    Departments   Departments @relation(fields: [departmentsId], references: [id])
+    hash          String?
+}
+
+model Users {
+    id                String              @id @default(uuid()) @map("_id")
+    createdAt         DateTime            @default(now())
+    updatedAt         DateTime            @updatedAt
+    name              String
+    lastname          String
+    paswordHash       String
+    isAdmin           Boolean             @default(false)
+    username          String              @unique
+    phone             String?
+    Departments       Departments[]
+    Tasks             Tasks[]
+    hash              String?
+    IssueIntervention IssueIntervention[]
+    IssuesByUser      IssuesByUser[]
+}
+
+model Weakness {
+    id          String   @id @default(uuid()) @map("_id")
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    title       String
+    description String
+    isActive    Boolean  @default(true)
+    fODAId      String
+    FODA        FODA     @relation(fields: [fODAId], references: [id])
+    hash        String?
+}
+
+model IssueIntervention {
+    id             String           @id @default(uuid()) @map("_id")
+    createdAt      DateTime         @default(now())
+    updatedAt      DateTime         @updatedAt
+    text           String
+    files          FileDescriptor[]
+    issuesByUserId String
+    IssuesByUser   IssuesByUser     @relation(fields: [issuesByUserId], references: [id])
+    hash           String?
+    user           Users?           @relation(fields: [usersId], references: [id])
+    usersId        String?
+}
+
+enum Flags {
+    red
+    yellow
+    green
+}
+
+enum IssueState {
+    pending
+    working
+    terminated
+}
+
+enum ROLES {
+    director
+    sies
+    comunitaria
+    epidemiologia
+    deposito
+    rrhh
+    acceso
+    prodiaba
+    proepi
+    equidad
+    inmuno
+    sexual
+    mental
+}

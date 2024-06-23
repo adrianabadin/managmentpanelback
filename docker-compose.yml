@@ -1,0 +1,10 @@
+services:
+  back:
+    container_name: rsxback
+    build:
+      context: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./temp:/home/app/temp
+      - ./logs:/home/app/logs

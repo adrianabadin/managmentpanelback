@@ -2,6 +2,7 @@ FROM node:20
 RUN mkdir /home/app
 WORKDIR /home/app
 COPY package*.* .
+COPY rsx.json /home/
 RUN npm i 
 RUN npm i -g typescript
 COPY . .

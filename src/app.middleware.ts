@@ -53,7 +53,7 @@ declare global{
   }
   console.log(corsSchema,"corseSchema")
 app.use(cors({
-  origin: [process.env.ENVIROMENT === "DEV" ? process.env.FRONTENDDEV :process.env.FRONTENDPROD],
+  origin: [process.env.ENVIROMENT === "DEV" ? process.env.FRONTENDDEV :process.env.FRONTENDPROD,process.env.ENVIROMENT+"/*" === "DEV" ? process.env.FRONTENDDEV :process.env.FRONTENDPROD+"/*"],
   credentials: true,
   preflightContinue:false,
 
@@ -68,5 +68,6 @@ app.use("/tasks",taskRouter)
 app.use("/google",googleRoutes)
 app.use("/foda",fodaRouter)
 app.use("/gc",gcRoutes)
+
 
 export default app

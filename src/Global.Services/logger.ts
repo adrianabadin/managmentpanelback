@@ -18,11 +18,11 @@ export const logger = winston.createLogger({
 
 })
 
-if (process.env.ENVIROMENT !== 'PRODUCTION') {
-  logger.add(new winston.transports.Console({
-    format: winston.format.combine(
-      winston.format.prettyPrint(),
-      winston.format.colorize({ all: true }),
-      winston.format.timestamp())
-  }))
-}
+// if (process.env.ENVIROMENT !== 'PRODUCTION') {
+//   logger.add(new winston.transports.Console({
+//     format: winston.format.combine(
+//       winston.format.prettyPrint(),
+//       winston.format.colorize({ all: true }),
+//       winston.format.timestamp())
+//   }))
+// }

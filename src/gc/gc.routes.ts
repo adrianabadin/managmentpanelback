@@ -6,7 +6,7 @@ import { authController } from "../auth/auth.routes";
 import passport from "passport";
 export const gcRoutes= Router()
 gcRoutes.post("/",validateSchemaMiddleware(newKindOfIssue),passport.authenticate('jwt',{session:false}),authController.jwtCurrentUser,gcController.createKindOfIssue)
-gcRoutes.get("/",passport.authenticate('jwt',{session:false}),authController.jwtCurrentUser,gcController.getKindOfIssues)
+gcRoutes.get("/",gcController.getKindOfIssues)
 gcRoutes.put("/",validateSchemaMiddleware(newKindOfIssue),passport.authenticate('jwt',{session:false}),authController.jwtCurrentUser,gcController.updateKindOfIssue)
 gcRoutes.delete("/",passport.authenticate('jwt',{session:false}),authController.jwtCurrentUser,gcController.deleteKindOfIssue)
 gcRoutes.post("/issue",passport.authenticate('jwt',{session:false}),authController.jwtCurrentUser,gcController.createIssue)

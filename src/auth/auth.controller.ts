@@ -36,7 +36,10 @@ export class AuthController{
           if (response instanceof IssuanceMissingId) return res.status(401).send(new UnAuthorized())
           console.log(response,"token")
             res.clearCookie("jwt")
-            res.cookie("jwt",response,{secure:false,sameSite:"lax",httpOnly:false})
+            let cookieOptions
+            if (process.env.DATABASE_URL === "DEV") cookieOptions={secure: false,sameSite:"lax",httpOnly:false}
+            else cookieOptions={sameSite:"none",secure:true,httpOnly:true}
+            res.cookie("jwt",response,cookieOptions as any)
           next()
          
 

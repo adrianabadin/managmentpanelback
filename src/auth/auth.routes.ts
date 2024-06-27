@@ -12,8 +12,9 @@ authRoutes.post("/login",validateSchemaMiddleware(LoginSchema),passport.authenti
     res.status(200).send(req.user)})
     authRoutes.get("/logout",(req:Request,res:Response,next:NextFunction)=>{
     req.logout((error)=>{if (error) next(error)
-        res.clearCookie("jwt")
-        return res.status(200).send("Loged out")})
+        return res.clearCookie("jwt").send("logued out")
+    
+    })
     })
 authRoutes.get("/jwt",passport.authenticate('jwt',{session:false}),authController.jwtCurrentUser,(req:Request,res:Response)=>{
     res.send(req.user)

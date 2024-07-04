@@ -11,11 +11,12 @@ authRoutes.post("/login",validateSchemaMiddleware(LoginSchema),passport.authenti
     console.log(req.user, "hizo login");
     res.status(200).send(req.user)})
     authRoutes.get("/logout",(req:Request,res:Response,next:NextFunction)=>{
-    req.logout((error)=>{if (error) next(error)
-        return res.clearCookie("jwt").send("logued out")
+	res.clearCookie("jwt")
+//	    req.logout((error)=>{if (error) next(error)
+  //      return res.clearCookie("jwt")
     
     })
-    })
+    
 authRoutes.get("/jwt",passport.authenticate('jwt',{session:false}),authController.jwtCurrentUser,(req:Request,res:Response)=>{
     res.send(req.user)
 })    

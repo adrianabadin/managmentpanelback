@@ -19,6 +19,7 @@ export class GCController{
         this.addPhone=this.addPhone.bind(this);
         this.addMail=this.addMail.bind(this)
         this.addIntervention=this.addIntervention.bind(this)
+        this.closeIssue=this.closeIssue.bind(this)
     }
     async getInterventions(req:Request<any,any,any,{id:string}>,res:Response){
         const {id}=req.query
@@ -97,6 +98,12 @@ export class GCController{
         const response = await this.service.addIntervention(data)
         if (response instanceof PrismaError) return res.status(500).send(response)
         else return res.status(200).send(response)
+    }
+    async closeIssue(req:Request<any,any,Intervention>,res:Response){
+        const data = req.body
+        const response = await this.service.closeIssue(data)
+        if (response instanceof PrismaError) return res.status(500).send(response)
+            else return res.status(200).send(response)
     }
 }
 export const gcController = new GCController()

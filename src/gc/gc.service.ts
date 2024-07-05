@@ -21,7 +21,9 @@ export class GCService {
         this.addPhone=this.addPhone.bind(this);
         this.addMail=this.addMail.bind(this);
         this.addIntervention=this.addIntervention.bind(this);
+        this.closeIssue=this.closeIssue.bind(this);
     }
+    
     async createNewKindOfIssue(issue:NewKindOfIssue){
         try{
             const response  = await this.prisma.kindOfIssue.create({data:issue})
@@ -191,6 +193,27 @@ export class GCService {
             const error= returnPrismaError(e as Error)
             logger.error({function:"addMail",error})
             return error
+        }
+    }
+    async closeIssue(data:Intervention){
+        try{
+            const response = await this.prisma.$transaction([this.prisma.issueIntervention.create
+                ({data:
+                        {
+                            text:data.description,
+                            user:{connect:{id:data.userId}},
+                            IssuesByUser:{connect:{id:data.id}},
+                            files:data.files !== undefined ?  {create:data.files?.map((file)=>file)}:undefined
+                        }
+                    }),this.prisma.issuesByUser.update({where:{id:data.id},data:{issueState:"terminated"}})]) 
+                
+                return response[0]
+        }
+        catch(e){
+            const error= returnPrismaError(e as Error)
+            logger.error({function:"addMail",error})
+            return error
+
         }
     }
    async getInterventionsById(id:string){

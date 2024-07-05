@@ -60,7 +60,7 @@ export class AuthVerifyModule {
             logger.debug({function:"jwtLoginVerify",payload})
             let user = null
             if (payload === undefined) return done(new JWTMissing(),false)
-                user=await this.prisma.users.findUnique({where:{id:(payload as any).id }})    
+                user=await this.prisma.users.findUnique({where:{id:(payload as any).id },include:{Departments:true}})    
                 if (user === null) return done(new UserDoesntExists(),false)
             if (user instanceof PrismaError) return done(user,false)
             else {

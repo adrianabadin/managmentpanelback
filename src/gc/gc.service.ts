@@ -4,7 +4,7 @@ import { logger } from "../Global.Services/logger";
 import { returnPrismaError } from "../prisma/prisma.errors";
 import { Intervention, NewKindOfIssue, UserIssue } from './gc.schemas';
 import { docsManager } from "../google/google.service";
-import { GoogleError, StreamError } from "../google/google.errors";
+import { GoogleError, StreamError, isNotFound } from '../google/google.errors';
 import { connect } from "http2";
 export class GCService {
     constructor(
@@ -93,11 +93,12 @@ export class GCService {
 
         }
     }
-    async getIssues(id?:string){
+    async getIssues(id?:string,state?:"pending"|"working"|"terminated"){
         try{
+
             if (id === undefined){
                 const response = await this.prisma.issuesByUser.findMany(
-                    {
+                    {where:(state === undefined) ? undefined:{issueState:state},
                         include:
                         {
                             files:{select:{driveId:true,description:true,id:true}},
@@ -106,23 +107,6 @@ export class GCService {
                         }
                     })
                    return response
-                // return await Promise.all (response.map(async (item)=>
-                //     {   const files =  await Promise.all(item.files.map(
-                //         async (file)=>{
-                //             const response= await this.googleService.getFile(file.driveId)
-                //             if (response instanceof GoogleError) throw response
-                //             return {data:response,name:file.description,id:file.id}
-
-                //         }))
-                //         return {
-                //         ...item,
-                //         state:item.state.state,
-                //         kind:item.kind.name,
-                //         updatedAt:undefined,
-                //         kindOfIssueId:undefined,
-                //         demographyId:undefined,
-                //         files
-                //         }}))
                     }
             else {
                const response = await this.prisma.issuesByUser.findUniqueOrThrow(
@@ -179,16 +163,19 @@ export class GCService {
     }
     async addIntervention(data:Intervention){
         try{
-            const response = await this.prisma.issueIntervention.create
-            ({data:
-                    {
-                        text:data.description,
-                        user:{connect:{id:data.userId}},
-                        IssuesByUser:{connect:{id:data.id}},
-                        files:data.files !== undefined ?  {create:data.files?.map((file)=>file)}:undefined
-                    }
-                })
-                return response
+            const response = await this.prisma.$transaction([this.prisma.issueIntervention.create
+                ({data:
+                        {
+                            text:data.description,
+                            user:{connect:{id:data.userId}},
+                            IssuesByUser:{connect:{id:data.id}},
+                            files:data.files !== undefined ?  {create:data.files?.map((file)=>file)}:undefined
+                        }
+                    }),
+                    this.prisma.issuesByUser.update({where:{id:data.id},data:{issueState:"working"                    }})
+                
+                ]) 
+                return response[0]
         }catch(e){
             const error= returnPrismaError(e as Error)
             logger.error({function:"addMail",error})

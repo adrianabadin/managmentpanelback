@@ -72,9 +72,9 @@ export class GCController{
         else return res.status(200).send(response)
     }
 
-    async getIssues(req:Request<any,any,any,{id?:string}>,res:Response){
-        const {id}= req.query
-        const response = await this.service.getIssues(id)
+    async getIssues(req:Request<any,any,any,{id?:string,state?:"pending"|"working"|"terminated"}>,res:Response){
+        const {id,state}= req.query
+        const response = await this.service.getIssues(id,state)
         if (response instanceof PrismaError) return res.status(500).send(response)
         else return res.status(200).send(response)
     }

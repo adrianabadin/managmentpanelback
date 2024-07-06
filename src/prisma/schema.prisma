@@ -139,6 +139,7 @@ model IssuesByUser {
     hash                 String?
     user                 Users?              @relation(fields: [usersId], references: [id])
     usersId              String?
+    healthInsurance      String?
 }
 
 model KindOfIssue {

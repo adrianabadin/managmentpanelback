@@ -81,7 +81,8 @@ export class GCService {
                         socialSecurityNumber,
                         files:filesData === undefined ? undefined : {create:filesData.map(file=>({...file}))},                        
                         state:{connect:{state}},
-                        kind:{connect:{name:kind}}
+                        kind:{connect:{name:kind}},
+                        healthInsurance:issue.healthInsurance
                     }
                 ,select:{id:true}})
                 return response

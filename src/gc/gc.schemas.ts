@@ -35,6 +35,7 @@ export const userIssue = z
         },
         { message: "Debes proveer un email valido o nada" }
       ),
+    healthInsurance:z.string({invalid_type_error:"Debe ser una cadena de caracteres"}).optional(),
     name: z
       .string({ required_error: "El campo es obligatorio" })
       .min(3, { message: "El nombre debe tener al menos 3 letras" }),

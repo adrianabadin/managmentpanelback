@@ -9,7 +9,7 @@ gcRoutes.post("/",validateSchemaMiddleware(newKindOfIssue),passport.authenticate
 gcRoutes.get("/",gcController.getKindOfIssues)
 gcRoutes.put("/",validateSchemaMiddleware(newKindOfIssue),passport.authenticate('jwt',{session:false}),authController.jwtCurrentUser,gcController.updateKindOfIssue)
 gcRoutes.delete("/",passport.authenticate('jwt',{session:false}),authController.jwtCurrentUser,gcController.deleteKindOfIssue)
-gcRoutes.post("/issue",passport.authenticate('jwt',{session:false}),authController.jwtCurrentUser,gcController.createIssue)
+gcRoutes.post("/issue",gcController.createIssue)
 gcRoutes.get("/issue",passport.authenticate('jwt',{session:false}),authController.jwtCurrentUser,gcController.getIssues)
 gcRoutes.delete("/issue",passport.authenticate('jwt',{session:false}),authController.jwtCurrentUser,validateSchemaMiddleware(interventionSchema),gcController.closeIssue)
 gcRoutes.put("/addphone",passport.authenticate('jwt',{session:false}),authController.jwtCurrentUser,gcController.addPhone)

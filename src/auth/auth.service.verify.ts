@@ -8,6 +8,7 @@ import argon from "argon2"
 import { PrismaError } from "../prisma/prisma.errors";
 import { JWTMissing, UserDoesntExists } from "./auth.errors";
 import { PrismaClient } from '@prisma/client';
+import argon2 from 'argon2';
 const pc=new PrismaClient()
 export class AuthVerifyModule {
     
@@ -23,15 +24,18 @@ export class AuthVerifyModule {
     async signUpVerify(req:Request<any,any,SignUpType>,username:string,_password:string,done:any){
         try{
             let user = await this.prisma.users.findUnique({where:{username}})
-            console.log(user,"debe ser undefined")
             if (user !== null){
-                throw new Error("username already exists")
+                const {lastname,name,password}= req.body
+                const paswordHash=await argon2.hash(password);
+                const response =await this.prisma.users.update({where:{id:user.id},data:{isActive:true,lastname,name,paswordHash}})
+                done(null,response)
             }
             const response = await this.service.SignUpUser({...req.body,username:req.body.username.toUpperCase()})
             if (response !==undefined) done(null,response)
             else throw new Error ("Error creating user on database")
 
-        }catch(error){logger.error({function:"AuthVerifyModule.signUpVerify",error}
+        }catch(error){
+            logger.error({function:"AuthVerifyModule.signUpVerify",error}
         
         )
         done(error,false)
@@ -39,9 +43,7 @@ export class AuthVerifyModule {
     }
     async loginVerify(username:string,password:string,done:(...args:any)=>any){
         try{
-            console.log(username,password)
-            const user = await this.prisma.users.findUnique({where:{username:username.toUpperCase()},include:{Departments:{select:{name:true,id:true}}}})
-            console.log(user,"loginverify")
+            const user = await this.prisma.users.findUnique({where:{username:username.toUpperCase(),isActive:true},include:{DepartmentUsers:{include:{Departments:{select:{name:true,id:true}}}} }})
             if (user !==null) // si el usuario existe
             {
                 if (user?.paswordHash !==undefined && await argon.verify(user.paswordHash,password))
@@ -57,14 +59,12 @@ export class AuthVerifyModule {
     }
     async jwtVerify(payload:jwt.JwtPayload,done:(...args:any)=>void){
         try{
-            logger.debug({function:"jwtLoginVerify",payload})
             let user = null
             if (payload === undefined) return done(new JWTMissing(),false)
-                user=await this.prisma.users.findUnique({where:{id:(payload as any).id },include:{Departments:true}})    
+                user=await this.prisma.users.findUnique({where:{id:(payload as any).id,isActive:true },include:{DepartmentUsers:{include:{Departments:true}} }})    
                 if (user === null) return done(new UserDoesntExists(),false)
             if (user instanceof PrismaError) return done(user,false)
             else {
-                logger.debug({function:"jwtLoginVerify",user})
                 return done(null,user)
             }
         }catch(err){

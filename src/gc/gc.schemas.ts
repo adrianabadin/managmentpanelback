@@ -76,6 +76,7 @@ export const userIssue = z
     kind: z.string({ required_error: "El campo es obligatorio" }).min(3, {
       message: "El tipo de solicitud debe contener al menos 3 caracteres",
     }),
+    department:z.string({required_error:"El campo es obligatorio"}),
     description: z
       .string({ required_error: "El campo es obligatorio" })
       .min(3, {
@@ -108,6 +109,14 @@ export const interventionSchema=z.object({
 
   })
 })  
+export const derivationSchema=z.object({
+  body:z.object({
+    issueId:z.string({required_error:"Debes enviar un issueId"}),
+    userIssue:z.string({required_error:"Debes enviar un userIssue"}).optional(),
+    departmentId:z.string({required_error:"Debes enviar un departmentId"}).optional()
+  })
+})
+export type DerivationType=z.infer<typeof derivationSchema>["body"]
 export type  Intervention= z.infer<typeof interventionSchema>["body"]
 export type UserIssue = z.infer<typeof userIssue>["body"]
 export type FilesDescriptor = z.infer<typeof filesDescriptor>

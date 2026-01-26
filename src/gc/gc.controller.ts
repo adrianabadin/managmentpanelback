@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { gcService } from "./gc.service";
-import { Intervention, NewKindOfIssue, UserIssue } from "./gc.schemas";
+import { DerivationType, Intervention, NewKindOfIssue, UserIssue } from "./gc.schemas";
 import { GoogleError, MissingFile } from "../google/google.errors";
 import { idIsMissing } from "./gc.errors";
 import { PrismaError } from "../prisma/prisma.errors";
@@ -19,7 +19,8 @@ export class GCController{
         this.addPhone=this.addPhone.bind(this);
         this.addMail=this.addMail.bind(this)
         this.addIntervention=this.addIntervention.bind(this)
-        this.closeIssue=this.closeIssue.bind(this)
+        this.closeIssue=this.closeIssue.bind(this);
+        this.createDerivation=this.createDerivation.bind(this);
     }
     async getInterventions(req:Request<any,any,any,{id:string}>,res:Response){
         const {id}=req.query
@@ -28,7 +29,12 @@ export class GCController{
         if (response instanceof PrismaError) return res.status(500).send(response)
         else return res.status(200).send(response)
     }
-
+async createDerivation(req:Request<any,any,DerivationType>,res:Response){
+const {issueId,userIssue,departmentId}=req.body
+const response = await this.service.createDerivation(issueId,userIssue,departmentId);
+if (response instanceof PrismaError) return res.status(500).send(response)
+else return res.status(200).send(response)
+}
     async createKindOfIssue(req:Request<any,any,NewKindOfIssue>,res:Response){
         const issue = req.body
         const response = await this.service.createNewKindOfIssue(issue)
@@ -72,9 +78,9 @@ export class GCController{
         else return res.status(200).send(response)
     }
 
-    async getIssues(req:Request<any,any,any,{id?:string,state?:"pending"|"working"|"terminated"}>,res:Response){
-        const {id,state}= req.query
-        const response = await this.service.getIssues(id,state)
+    async getIssues(req:Request<any,any,any,{id?:string,state?:"pending"|"working"|"terminated",department?:string}>,res:Response){
+        const {id,state,department}= req.query
+        const response = await this.service.getIssues(id,state,department)
         if (response instanceof PrismaError) return res.status(500).send(response)
         else return res.status(200).send(response)
     }

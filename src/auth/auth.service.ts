@@ -134,68 +134,9 @@ class  IntegrityStr implements Models  {
     public strategySO:{validator:AnyZodObject,keys:(keyof Prisma.StrategySOSelect)[]}={validator:strategySOSchema,keys:["description","isActive","title","updatedAt"]}
     public strategyWM:{validator:AnyZodObject,keys:(keyof Prisma.StrategyWMSelect)[]}={validator:strategyWMSchema,keys:["description","isActive","title","updatedAt"]}
     public strategyWO:{validator:AnyZodObject,keys:(keyof Prisma.StrategyWOSelect)[]}={validator:strategyWOSchema,keys:["description","isActive","title","updatedAt"]}
+    public usersDepartments:{validator:AnyZodObject,keys:(keyof Prisma.UsersDepartmentsSelect)[]}={validator:z.object({}),keys:[]}
 }
 const integrityObject = new IntegrityStr()
-
-// .$extends({
-//     query:{$allModels:{
-//         async create({model,operation,args,query}){
-//             const updatedAt = new Date()
-//             const modelLabel:keyof IntegrityStr=`${model.slice(0,1).toLowerCase()}${model.slice(1,model.length)}` as keyof IntegrityStr
-//             args.data.createdAt=updatedAt
-//             args.data.updatedAt=updatedAt
-//             const actualKeys=Object.keys(args.data)
-//             const valResult=IntegrityValidationSchema(integrityObject[modelLabel].keys,modelLabel).safeParse(Object.keys(args.data))            
-//             if (!valResult.success) {
-//                 return new HashCreationError(valResult.error.issues)}
-//             let dataHash:object={}
-//             integrityObject[modelLabel as keyof IntegrityStr].keys.forEach(key=>{
-//                 dataHash={...dataHash,[key]:args.data[key as keyof typeof args.data]}}
-//             )
-//             const hash=await argon2.hash(JSON.stringify(dataHash))
-//             const data = {...args.data, hash,id:nanoid()}
-//             const result = await query({...args,data} as any)
-//             return result
-            
-//         },
-//         async update({model,operation,args,query}){
-//             const updatedAt = new Date()
-//             const modelLabel:keyof IntegrityStr=`${model.slice(0,1).toLowerCase()}${model.slice(1,model.length)}` as keyof IntegrityStr
-//             args.data.updatedAt=updatedAt
-//             const valResult= IntegrityValidationSchema(integrityObject[modelLabel].keys,modelLabel).safeParse(Object.keys(args.data))
-//             if (!valResult.success) return new HashCreationError(valResult.error.issues)
-//                 let dataHash:object={}
-//             integrityObject[modelLabel as keyof IntegrityStr].keys.forEach(key=>{
-//                 dataHash={...dataHash,[key]:args.data[key as keyof typeof args.data]}}
-//             )
-//             const hash=await argon2.hash(JSON.stringify(dataHash))
-//             const data = {...args.data, hash,id:nanoid()}
-//             const result = await query({...args,data} as any)
-//             //FUNCIONA PERFECTO, PARA VALIDAR EL HASH HAY QUE GENERAR UN SERIALIZADO DEL MODELO QUE OMITA
-//             // LOS CAMPOS CREATEDAT UPDATEDAT ID Y HASH DEL MODEL
-//             return result
-            
-//         },
-//         async findUnique({model,operation,args,query}){
-//             const basicData = await query(args)
-//             const modelLabel:keyof IntegrityStr=`${model.slice(0,1).toLowerCase()}${model.slice(1,model.length)}` as keyof IntegrityStr
-//             const model2:keyof typeof  prismaClient=`${model.slice(0,1).toLowerCase()}${model.slice(1,model.length)}` as keyof typeof prismaClient
-//             const prismaModel=prismaClient[model2]
-//             const functionFind:{findUnique:(args:Prisma.Args<typeof prismaModel,"findUnique">)=>void}=prismaClient[modelLabel]
-//             const getData= functionFind.findUnique({where:{id:basicData?.id},select:integrityObject[modelLabel].keys.map(model=>{})}) 
-//             console.log(args.where,args.where,args, "UNIQUE")
-//             return basicData
-//         },
-//         async findMany({model,operation,args,query}){
-//             const basicData = await query(args)
-//             console.log(args.where,operation,args,"MANY")
-//             return basicData
-//         }
-
-//     },//aca hay que hacer los findValidados para cada model especifico
-
-// }
-// })
 
 
 export class AuthService{
@@ -219,7 +160,6 @@ async SignUpUser (data:SignUpType){
         paswordHash,lastname:data.lastname,name:data.name,username:data.username
     }
     const response =await this.prisma.users.create({data:dataWithHash})
-    console.log(response,"saved" )
     return response
     }catch(error){logger.error({function:"AuthService.SignUpUser",error})
 

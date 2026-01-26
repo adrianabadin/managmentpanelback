@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { gcController } from "./gc.controller";
 import { validateSchemaMiddleware } from "../auth/auth.schema";
-import { interventionSchema, newKindOfIssue } from "./gc.schemas";
+import { interventionSchema, newKindOfIssue, derivationSchema } from "./gc.schemas"; // Added derivationSchema import
 import { authController } from "../auth/auth.routes";
 import passport from "passport";
 export const gcRoutes= Router()
@@ -16,3 +16,4 @@ gcRoutes.put("/addphone",passport.authenticate('jwt',{session:false}),authContro
 gcRoutes.put("/addmail",passport.authenticate('jwt',{session:false}),authController.jwtCurrentUser,gcController.addMail)
 gcRoutes.post("/intervention",passport.authenticate('jwt',{session:false}),authController.jwtCurrentUser,validateSchemaMiddleware(interventionSchema),gcController.addIntervention)
 gcRoutes.get("/interventions",passport.authenticate('jwt',{session:false}),authController.jwtCurrentUser,gcController.getInterventions)
+gcRoutes.put("/derivation",(req,res,next)=>{console.log(req.body);next()} ,passport.authenticate('jwt',{session:false}),authController.jwtCurrentUser,validateSchemaMiddleware(derivationSchema),gcController.createDerivation)

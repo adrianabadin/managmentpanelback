@@ -2,12 +2,35 @@ import { Request, Response } from "express";
 import { logger } from "../Global.Services/logger";
 import { DeparmentService } from './deparment.service';
 import { departmentCreateType } from "./department.schema";
+import { SetAdminType, DepartmentsType,DepartmentType } from "../users/users.schema";
 import { PrismaError } from "../prisma/prisma.errors";
 const departmentService=new DeparmentService()
 export class DeparmentController{
     constructor(protected service = departmentService){
         this.createDepartment=this.createDepartment.bind(this);
 this.getDepartments=this.getDepartments.bind(this);
+this.addResponsableToDepartment=this.addResponsableToDepartment.bind(this);
+this.addResponsableToDepartments=this.addResponsableToDepartments.bind(this);
+    }
+    async addResponsableToDepartment(req:Request<SetAdminType["params"],any,any,DepartmentType["query"]>,res:Response){
+    try{
+        const response = await this.service.addResponsableToDepartment(req.query.name, req.params.id)
+        if (response instanceof PrismaError) return res.status(500).send(response)
+        else return res.status(200).send(response)
+    }catch(error){
+        logger.error({function:"DeparmentController.addResponsable",error})
+        return res.status(500).send(error)
+    }
+    }
+    async addResponsableToDepartments(req: Request<SetAdminType["params"],any,any,DepartmentsType["body"]>, res: Response){
+        try{
+            const response = await this.service.addResponsableToDepartments(req.body.name, req.params.id)
+            if (response instanceof PrismaError) return res.status(500).send(response)
+            else return res.status(200).send(response)
+        }catch(error){
+            logger.error({function:"DeparmentController.addResponsableToDepartments",error})
+            return res.status(500).send(error)
+        }
     }
     async createDepartment(req:Request<any,any,departmentCreateType["body"]>,res:Response){
         try{

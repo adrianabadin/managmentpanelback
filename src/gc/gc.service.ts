@@ -22,8 +22,28 @@ export class GCService {
         this.addMail=this.addMail.bind(this);
         this.addIntervention=this.addIntervention.bind(this);
         this.closeIssue=this.closeIssue.bind(this);
+        this.createDerivation=this.createDerivation.bind(this);
     }
-    
+    async createDerivation(issueId:string,userIssue?:string,departmentId?:string){
+        try{
+            if (userIssue !==undefined){
+                const response = await this.prisma.issuesByUser.update({where:{id:issueId},data:{user:{connect:{id:userIssue}}}})
+                return response;
+            }
+            if (departmentId !== undefined){  
+            
+                const response = await this.prisma.issuesByUser.update({where:{id:issueId},data:{ department:{connect:{id:departmentId}}}})
+            
+                return response;
+        }
+        throw new Error("Debe enviar un userIssue o un departmentId")
+        
+        }catch(e){
+            logger.error({function:"createDerivation",error:e})
+            const error= returnPrismaError(e as Error)
+            return error
+        }
+    }
     async createNewKindOfIssue(issue:NewKindOfIssue){
         try{
             const response  = await this.prisma.kindOfIssue.create({data:issue})
@@ -82,7 +102,8 @@ export class GCService {
                         files:filesData === undefined ? undefined : {create:filesData.map(file=>({...file}))},                        
                         state:{connect:{state}},
                         kind:{connect:{name:kind}},
-                        healthInsurance:issue.healthInsurance
+                        healthInsurance:issue.healthInsurance, 
+                         department:{connect:{name:issue.department}}
                     }
                 ,select:{id:true}})
                 return response
@@ -94,19 +115,28 @@ export class GCService {
 
         }
     }
-    async getIssues(id?:string,state?:"pending"|"working"|"terminated"){
+    async getIssues(id?:string,state?:"pending"|"working"|"terminated",department?:string){
         try{
-
             if (id === undefined){
+                let where ={}
+                if (state !== undefined){
+                    where={issueState:state}
+
+                }
+                if (department !== undefined){
+                    where={...where,department:{name:department}}
+                }
                 const response = await this.prisma.issuesByUser.findMany(
-                    {where:(state === undefined) ? undefined:{issueState:state},
-                        include:
+                   {where,
+                    include:
                         {
                             files:{select:{driveId:true,description:true,id:true}},
                             kind:{select:{name:true}},
-                            state:{select:{state:true}}
+                            state:{select:{state:true}},
+                            department:{select:{name:true}}
                         }
                     })
+                    console.log(response,"issues",where)
                    return response
                     }
             else {
@@ -116,7 +146,11 @@ export class GCService {
                     include:{                            
                         files:{select:{driveId:true,description:true,id:true}},
                         kind:{select:{name:true}},
-                        state:{select:{state:true}}
+                        department:{select:{name:true}},
+                        state:{select:{state:true},
+                        
+                    
+                    }
                             }
                 })
                const files=(await Promise.all(response.files.map(async (file)=>{

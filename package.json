@@ -4,21 +4,20 @@
   "description": "",
   "main": "./dist/app.js",
   "scripts": {
-    "nodedev":"npx ts-node-dev --respawn --transpile-only ./src/app.ts",
+    "nodedev": "npx ts-node-dev --respawn --transpile-only ./src/app.ts",
     "dev": "concurrently   \"tsc --watch\" \"nodemon ./dist/app \" ",
     "build": "prisma db push --schema ./src/prisma/schema.prisma && tsc && node ./app/dist",
     "test": "vitest --ui",
     "start": "node ./dist/app"
   },
-  
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@googleapis/docs": "^3.0.0",
     "@prisma/client": "^5.8.1",
-    "@swc/cli": "^0.3.12",
-    "@swc/core": "^1.5.29",
+    "@swc/cli": "^0.7.10",
+    "@swc/core": "^1.15.8",
     "@vitest/ui": "^1.2.1",
     "argon2": "0.28.1",
     "cookie-parser": "^1.4.6",
@@ -34,11 +33,14 @@
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "supertest": "^6.3.4",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.4.5",
     "uuid": "^9.0.1",
     "vitest": "^1.2.1",
     "winston": "^3.11.0",
-    "zod": "^3.22.4",
-    "typescript": "^5.4.5"
+    "winston-mongodb": "^7.0.1",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.6",
@@ -61,10 +63,7 @@
     "eslint": "^8.56.0",
     "nodemon": "^3.1.0",
     "prisma": "^5.8.1",
-    "ts-node": "^10.9.2",
-    "ts-node-dev": "^2.0.0",
     "ts-standard": "^12.0.2"
-    
   },
   "eslintConfig": {
     "extends": [

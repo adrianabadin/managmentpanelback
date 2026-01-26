@@ -68,6 +68,6 @@ app.use("/tasks",taskRouter)
 app.use("/google",googleRoutes)
 app.use("/foda",fodaRouter)
 app.use("/gc",gcRoutes)
-
+console.log(process.env.DATABASE_URL,"databaseurl")
 
 export default app

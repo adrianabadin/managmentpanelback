@@ -27,6 +27,7 @@ static authClient:Auth.GoogleAuth  |undefined
         this.deleteAll=this.deleteAll.bind(this);
         this.getFile=this.getFile.bind(this);
         this.sendMail=this.sendMail.bind(this)
+        this.CustomMail=this.CustomMail.bind(this)
 }
     /**
      * 
@@ -36,7 +37,7 @@ static authClient:Auth.GoogleAuth  |undefined
     async initiateService(){
         //const datab= await fs.promises.readFile("./rsx.json", "utf8");
         const authClient= new google.auth.GoogleAuth({
-            keyFilename: "../rsx.json", //process.env.ENVIROMENT!=="DEV"? "rsx.json":"../rsx.json",
+            keyFilename: "rsx.json", //process.env.ENVIROMENT!=="DEV"? "rsx.json":"../rsx.json",
             scopes:
                 [             
                 "https://www.googleapis.com/auth/documents",'https://www.googleapis.com/auth/drive']})
@@ -187,6 +188,27 @@ async getFile(id:string){
         logger.error({function:"listFiles",error})
         return new UnknownGoogleError(error)
     }
+}
+async CustomMail(body:string,to:string,nombre:string,autor:string,asunto:string){
+    try{
+        const html = `<article>
+        <h2 style="font-weight: bold; font-size: 22px;">Estimado ${nombre.toUpperCase()} :</h2>
+        <p style="text-align: justify;">${body}</p>
+        <div style=" align-items: flex-start;">
+          <h4 style="font-weight: bold; text-align: left;">${autor.toUpperCase()}</h4>
+          <h4 style="font-weight: bold; text-align: left;">Region Sanitaria X</h4>
+        </div>  
+      </article>`
+      
+       const {accepted,rejected,messageId} = await  
+       this.mailTransport.sendMail({to,from:"rsxabadin@gmail.com",subject:asunto,html})
+       return {accepted,rejected,messageId}
+       
+    }catch(error){
+        logger.error({function:"listFiles",error})
+        return new UnknownGoogleError(error)
+    }
+
 }
 async sendMail(body:string,to:string,nombre:string,autor:string){
     try{

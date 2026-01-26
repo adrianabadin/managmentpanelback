@@ -34,7 +34,6 @@ export class AuthController{
         
           const response = this.service.jwtIssuance(req.user.id)
           if (response instanceof IssuanceMissingId) return res.status(401).send(new UnAuthorized())
-          console.log(response,"token")
             res.clearCookie("jwt")
             let cookieOptions
             if (process.env.DATABASE_URL === "DEV") cookieOptions={secure: false,sameSite:"lax",httpOnly:false}
@@ -52,7 +51,6 @@ export class AuthController{
       }
        deSerialize = async (userId: string, done: DoneCallback) => {
         try{
-        console.log("es aca")
           const response = await this.prisma.users.findUnique({where:{id:userId}}) 
             if (response !==null){
             return done(null, response)}

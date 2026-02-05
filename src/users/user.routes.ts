@@ -14,5 +14,6 @@ userRouter.put("/adddepartments/:id",(req:Request,res:Response,next:NextFunction
 userRouter.get("/getusers/:id?", passport.authenticate('jwt',{session:false}),usersController.getUsers)
 userRouter.get("/sendresettoken/:username",usersController.sendResetToken)
 userRouter.delete("/delete",passport.authenticate('jwt',{session:false}),authController.jwtCurrentUser,usersController.deleteUser)
+userRouter.put("/revive",passport.authenticate('jwt',{session:false}),authController.jwtCurrentUser,usersController.reviveUser)
 userRouter.post("/resetpassword",validateSchemaMiddleware(changePasswordSchema),usersController.resetPassword)
 export default userRouter

@@ -65,6 +65,7 @@ export class AuthVerifyModule {
                 if (user === null) return done(new UserDoesntExists(),false)
             if (user instanceof PrismaError) return done(user,false)
             else {
+                this.service.jwtIssuance(user.id)
                 return done(null,user)
             }
         }catch(err){

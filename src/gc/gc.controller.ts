@@ -1,11 +1,12 @@
 import { Request, Response } from "express";
 import { gcService } from "./gc.service";
-import { DerivationType, Intervention, NewKindOfIssue, UserIssue } from "./gc.schemas";
+import { DerivationType, Intervention, IssuesByUserRequest, NewKindOfIssue, UserIssue } from "./gc.schemas";
 import { GoogleError, MissingFile } from "../google/google.errors";
 import { idIsMissing } from "./gc.errors";
 import { PrismaError } from "../prisma/prisma.errors";
 import { InvalidParameterException } from "../foda/foda.errors";
 import { docsManager, GoogleService } from "../google/google.service";
+import { logger } from "../Global.Services/logger";
 
 export class GCController{
     constructor(protected service=gcService,protected googleService=docsManager){
@@ -21,7 +22,19 @@ export class GCController{
         this.addIntervention=this.addIntervention.bind(this)
         this.closeIssue=this.closeIssue.bind(this);
         this.createDerivation=this.createDerivation.bind(this);
+        this.getIssuesByUser=this.getIssuesByUser.bind(this)
+
     }
+async getIssuesByUser (req:Request<any,any,any,IssuesByUserRequest>,res:Response){
+try {
+    const {state,username} = req.query
+    return  res.status(200).send(await this.service.getIssuesByState(state,username))
+}catch(error){
+    logger.error({function:"getIssuesByUser",error})
+    return res.status(500).send(error)
+}
+}
+    
     async getInterventions(req:Request<any,any,any,{id:string}>,res:Response){
         const {id}=req.query
     if (id === undefined) return res.status(404).send(new InvalidParameterException("Debes enviar un id"))

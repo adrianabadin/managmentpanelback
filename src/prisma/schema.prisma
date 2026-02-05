@@ -68,6 +68,7 @@ model Departments {
   Demography      Demography[]
   DepartmentUsers UsersDepartments[]
   IssuesByUser    IssuesByUser[]
+  isActive        Boolean            @default(true)
 }
 
 model UsersDepartments {

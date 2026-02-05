@@ -116,6 +116,13 @@ export const derivationSchema=z.object({
     departmentId:z.string({required_error:"Debes enviar un departmentId"}).optional()
   })
 })
+export const issuesByUserSchema = z.object({
+  query: z.object({
+    username:z.string({required_error:"Debes enviar un usuario"}).email({message:"EL usuario debe ser un mail valido"}),
+    state:z.enum(["pending","working","terminated"])
+  })
+})
+export type IssuesByUserRequest =z.infer<typeof issuesByUserSchema>["query"]
 export type DerivationType=z.infer<typeof derivationSchema>["body"]
 export type  Intervention= z.infer<typeof interventionSchema>["body"]
 export type UserIssue = z.infer<typeof userIssue>["body"]

@@ -167,7 +167,7 @@ async SignUpUser (data:SignUpType){
 }
 jwtIssuance(id:string){
     if (id === undefined) return new IssuanceMissingId()
-    return   sign({id,date:new Date()},"Gran tipo MILEI",{expiresIn:'30m'})
+    return   sign({id,date:new Date()},"Gran tipo MILEI",{expiresIn:1000*60*30})
 }
 }
 export { prismaClient };

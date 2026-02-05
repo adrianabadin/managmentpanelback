@@ -6,12 +6,16 @@ import { Intervention, NewKindOfIssue, UserIssue } from './gc.schemas';
 import { docsManager } from "../google/google.service";
 import { GoogleError, StreamError, isNotFound } from '../google/google.errors';
 import { connect } from "http2";
+import { isUndefined } from "util";
+import { drive } from "googleapis/build/src/apis/drive";
+
 export class GCService {
     constructor(
         protected prisma=new PrismaClient(),
         protected googleService= docsManager
         ){
-        this.getInterventionsById=this.getInterventionsById.bind(this)
+            this.getIssuesByState=this.getIssuesByState.bind(this)
+            this.getInterventionsById=this.getInterventionsById.bind(this)
         this.createNewKindOfIssue=this.createNewKindOfIssue.bind(this);
         this.getKindOfIssues=this.getKindOfIssues.bind(this);
         this.deleteKindOfIssue=this.deleteKindOfIssue.bind(this);
@@ -24,6 +28,7 @@ export class GCService {
         this.closeIssue=this.closeIssue.bind(this);
         this.createDerivation=this.createDerivation.bind(this);
     }
+    
     async createDerivation(issueId:string,userIssue?:string,departmentId?:string){
         try{
             if (userIssue !==undefined){
@@ -115,10 +120,12 @@ export class GCService {
 
         }
     }
+    
     async getIssues(id?:string,state?:"pending"|"working"|"terminated",department?:string){
         try{
             if (id === undefined){
                 let where ={}
+    
                 if (state !== undefined){
                     where={issueState:state}
 
@@ -136,8 +143,17 @@ export class GCService {
                             department:{select:{name:true}}
                         }
                     })
-                    console.log(response,"issues",where)
-                   return response
+                //     console.log(response,"issues",where)
+                //    const driveIds= response.flatMap(issue=>issue.files.map(file=>file.driveId))
+                //    const archivos = new Map();
+                //    await Promise.all(driveIds.map(async (driveId)=>{
+                //         archivos.set(driveId,await this.googleService.getFile(driveId))
+                //    }))
+                //    const salida = response.map(issue=>{
+                //     const files= issue.files.map(file=>archivos.get(file.driveId))
+                //     return response
+                //    })
+                    return response
                     }
             else {
                const response = await this.prisma.issuesByUser.findUniqueOrThrow(
@@ -146,14 +162,11 @@ export class GCService {
                     include:{                            
                         files:{select:{driveId:true,description:true,id:true}},
                         kind:{select:{name:true}},
-                        department:{select:{name:true}},
-                        state:{select:{state:true},
-                        
-                    
-                    }
+                        department:{where:{isActive:true},select:{name:true}},
+                        state:{select:{state:true}}
                             }
                 })
-               const files=(await Promise.all(response.files.map(async (file)=>{
+                const files=(await Promise.all(response.files.map(async (file)=>{
                    const response = await this.googleService.getFile(file.driveId)
                 if (response instanceof GoogleError) throw response
                 return {data:response,name:file.description,id:file.id}
@@ -174,6 +187,53 @@ export class GCService {
             return error
 
         }
+    }
+    async getIssuesByState(state:"pending"|"working"|"terminated",username:string){
+        const data =await this.prisma.$transaction(async (tx)=>{
+            const response =await tx.users.findUniqueOrThrow({where:{username},include:{DepartmentUsers:{select:{departmentId:true}}} })
+            const departments= response.DepartmentUsers.map(e=>e.departmentId)
+            console.log(departments,"ids")
+            const issues = await  tx.issuesByUser.findMany({
+                where:{
+                    // department:{isActive:true},
+                    issueState:state,
+                    departmentsId:{in:departments}},
+                    
+                include:{                        
+                        files:{select:{driveId:true,description:true,id:true}},
+                        kind:{select:{name:true}},
+                        department:{where:{isActive:true},select:{name:true}},
+                        state:{select:{state:true}}}})
+            return issues
+        })
+    //     console.log(data,"issues")
+    //   const allDriveIds = [...new Set(data.flatMap(issue => 
+    //     issue.files.map(file => file.driveId)
+    // ))];
+    // // Batch fetch all files at once (if your googleService supports it)
+    // // Otherwise, fetch in parallel
+    // const driveFilesMap = new Map();
+    // await Promise.all(
+    //     allDriveIds.map(async (driveId) => {
+    //         const file = await this.googleService.getFile(driveId);
+    //         driveFilesMap.set(driveId, file);
+    //     })
+    // );     
+    // console.log(allDriveIds,"map")
+    // const salida = data.map(issue=>{
+    //     const archivos= issue.files.map(file=>driveFilesMap.get(file.driveId))
+    //         return {
+    //             ...issue,
+    //             state:issue.state.state,
+    //             kind:issue.kind.name,
+    //             kindOfIssueId:"",
+    //             demographyId:"",
+    //             files:archivos
+    //         }
+
+    // })
+    
+        return  data
     }
     async addPhone(phone:string,id:string){
         try{

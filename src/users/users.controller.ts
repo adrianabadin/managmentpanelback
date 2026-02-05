@@ -20,7 +20,9 @@ constructor(protected prisma=prismaClient,protected service=usersService){
     this.rmDepartment=this.rmDepartment.bind(this)
     this.sendResetToken=this.sendResetToken.bind(this)
     this.resetPassword=this.resetPassword.bind(this)
+    this.reviveUser=this.reviveUser.bind(this)
 }
+
 async resetPassword (req:Request<any,any,ChangePasswordType["body"]>,res:Response){
     try{
         const {password,token,username} = req.body
@@ -38,7 +40,6 @@ async resetPassword (req:Request<any,any,ChangePasswordType["body"]>,res:Respons
 async sendResetToken(req:Request<{username:string}>,res:Response){
     try{
     const user= req.params.username
-    console.log(user,"nn",req.query)
     if (user === undefined || user === null || !user.toString().includes("@")) return res.status(400).send("Debes enviar un mail correcto")
     await this.service.sendResetToken(user.toUpperCase())
     
@@ -99,7 +100,6 @@ try{
 async getUsers(req:Request<{id:string}>,res:Response){
     try{
         const response = await this.service.getUsers(req.params.id)
-        console.log (response,"getUsers controller")
         return res.status(200).send(response)
     }catch(error){
         logger.error({function:"UsersController.getUsers",error})
@@ -109,11 +109,18 @@ async getUsers(req:Request<{id:string}>,res:Response){
 async deleteUser(req:Request<any,any,any,{id:string}>,res:Response){
     try{
         const response = await this.service.deleteUser(req.query.id)
-        console.log(response,"deleted user")
         return res.status(200).send(response)
     }catch(error){
         logger.error({function:"UsersController.deleteUser",error})
         return res.status(500).send({error})
     }
 }
-}
+async reviveUser(req:Request<any,any,any,{id:string}>,res:Response){
+        try{
+        const response = await this.service.reviveUser(req.query.id)
+        return res.status(200).send(response)
+    }catch(error){
+        logger.error({function:"UsersController.deleteUser",error})
+        return res.status(500).send({error})
+    }
+}}

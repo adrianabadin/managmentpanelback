@@ -24,6 +24,7 @@ export class UsersService {
         this.removeDepartment=this.removeDepartment.bind(this)
         this.sendResetToken=this.sendResetToken.bind(this)
         this.resetPassword=this.resetPassword.bind(this)
+        this.reviveUser=this.reviveUser.bind(this)
 
     }
     async resetPassword(token:string,user:string,password:string){
@@ -49,7 +50,6 @@ export class UsersService {
 async sendResetToken(username:string){
 const [,user] =await Promise.all([this.googleService.initiateService(),this.prisma.users.findUniqueOrThrow({where:{username,isActive:true}})])
 if (user === undefined || user ===null) throw new UserNotFound();
-console.log({user},"usuario")
 const token= v4();
 const enviroment= process.env.ENVIROMENT.toUpperCase();
 const front= enviroment ==="DEV" ? process.env.FRONTENDDEV : process.env.FRONTENDPROD
@@ -182,6 +182,16 @@ async getUsers(id?:string){
         }catch(error){
             logger.error({function:"UsersService.deleteUser",error})
         }
+    }
+    async reviveUser(id:string){
+      try{
+        if (id  === undefined || id === null || typeof id !=="string") throw new Error("Must provide a valid ID")
+                     const response = await this.prisma.users.update({where:{id},data:{isActive:true}})
+            return response
+
+      }catch(error){
+        logger.error({function:"UsersService.deleteUser",error})
+      }
     }
     async removeDepartment(id:string,departmentName:string){
         try{

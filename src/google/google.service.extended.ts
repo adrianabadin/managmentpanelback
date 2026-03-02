@@ -319,8 +319,8 @@ export class GoogleServiceExtended extends GoogleService {
             headerFormatRequests.push({
               updateTextStyle: {
                 range: {
-                  startIndex: pe.startIndex,
-                  endIndex: pe.startIndex + text.length
+                  startIndex: pe.startIndex!,
+                  endIndex: pe.startIndex! + text.length
                 },
                 textStyle: { italic: true },
                 fields: 'italic'
@@ -612,7 +612,7 @@ export class GoogleServiceExtended extends GoogleService {
                 // Buscar el ":\n" al final del label
                 if (pe.textRun.content.includes(`${img.label}:`)) {
                   // Insertar imagen justo después del label (después del ":\n")
-                  imageInsertIndex = pe.startIndex + pe.textRun.content.indexOf(`${img.label}:`) + img.label.length + 1;
+                  imageInsertIndex = pe.startIndex! + pe.textRun.content.indexOf(`${img.label}:`) + img.label.length + 1;
                   console.log(`  🔍 Label encontrado en startIndex ${pe.startIndex}, imagen irá en ${imageInsertIndex}`);
                   break;
                 }

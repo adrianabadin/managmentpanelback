@@ -6,6 +6,7 @@ COPY rsx.json /home/
 RUN npm i 
 RUN npm i -g typescript
 COPY . .
+RUN npx prisma generate --schema ./src/prisma/schema.prisma
 EXPOSE 8080
 RUN npx tsc
 RUN chmod +x /home/app/entrypoint.sh

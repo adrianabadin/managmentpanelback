@@ -3,8 +3,9 @@ services:
     container_name: rsxback
     build:
       context: .
-    ports:
-      - "8081:8080"
+    network_mode: host
+    environment:
+      - DATABASE_URL=mongodb://graveddiger:2947DarthRevan@localhost:27017/rsx?replicaSet=rs1&authSource=admin&directConnection=true
     volumes:
       - ./temp:/home/app/temp
       - ./logs:/home/app/logs

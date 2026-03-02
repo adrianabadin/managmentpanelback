@@ -1,0 +1,225 @@
+import { expect, describe, it, beforeEach, afterEach, vi } from "vitest";
+import { Prisma } from "@prisma/client";
+import { v4 as uuid } from "uuid";
+
+// Mock prismaClient BEFORE importing
+vi.mock("../../app.middleware", () => ({
+  default: {},
+  prismaClient: {
+    users: {
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+    },
+    departments: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
+    },
+    usersDepartments: {
+      create: vi.fn(),
+      deleteMany: vi.fn(),
+    },
+    $transaction: vi.fn(),
+  },
+}));
+
+// Now import after mocking
+import { prismaClient } from "../../app.middleware";
+import { UsersService } from "../users.service";
+
+const mockUser: Required<Prisma.UsersCreateWithoutDepartmentsInput> = {
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  paswordHash: "hashed_password_test",
+  id: "test-user-id-123",
+  isAdmin: false,
+  lastname: "TestLastName",
+  name: "TestName",
+  phone: "1234567890",
+  username: "test@example.com",
+};
+
+describe("UsersService Tests", () => {
+  let usersService: UsersService;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    usersService = new UsersService();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe("setAdmin", () => {
+    it("should call update when id parameter is provided", async () => {
+      const userId = uuid();
+      const adminUser = { ...mockUser, isAdmin: true };
+      vi.mocked(prismaClient.users.update).mockResolvedValue(adminUser as any);
+
+      const response = await usersService.setAdmin(userId);
+
+      expect(prismaClient.users.update).toHaveBeenCalledTimes(1);
+      expect(prismaClient.users.update).toHaveBeenCalledWith({
+        where: { id: userId },
+        data: { isAdmin: true },
+      });
+      expect(response).toEqual(adminUser);
+      expect(response?.isAdmin).toBe(true);
+    });
+
+    it("should return undefined if ID is not provided", async () => {
+      const response = await usersService.setAdmin(undefined as any);
+
+      expect(prismaClient.users.update).not.toHaveBeenCalled();
+      expect(response).toBeUndefined();
+    });
+
+    it("should handle database errors gracefully", async () => {
+      const userId = uuid();
+      const dbError = new Error("Database connection failed");
+      vi.mocked(prismaClient.users.update).mockRejectedValue(dbError);
+
+      const response = await usersService.setAdmin(userId);
+
+      expect(prismaClient.users.update).toHaveBeenCalledTimes(1);
+      expect(response).toBeUndefined();
+    });
+  });
+
+  describe("addDepartment", () => {
+    it("should call update if userID and departmentName are provided", async () => {
+      const userId = uuid();
+      const deptId = uuid();
+      vi.mocked(prismaClient.users.update).mockResolvedValue(mockUser as any);
+
+      const response = await usersService.addDepartment(userId, deptId);
+
+      expect(prismaClient.users.update).toHaveBeenCalledTimes(1);
+      expect(response).toEqual(mockUser);
+    });
+
+    it("should return undefined if userId is not provided", async () => {
+      const deptId = uuid();
+      const response = await usersService.addDepartment(undefined as any, deptId);
+
+      expect(prismaClient.users.update).not.toHaveBeenCalled();
+      expect(response).toBeUndefined();
+    });
+
+    it("should return undefined if departmentId is not provided", async () => {
+      const userId = uuid();
+      const response = await usersService.addDepartment(userId, undefined as any);
+
+      expect(prismaClient.users.update).not.toHaveBeenCalled();
+      expect(response).toBeUndefined();
+    });
+
+    it("should return undefined if both parameters are missing", async () => {
+      const response = await usersService.addDepartment(
+        undefined as any,
+        undefined as any
+      );
+
+      expect(prismaClient.users.update).not.toHaveBeenCalled();
+      expect(response).toBeUndefined();
+    });
+
+    it("should handle database errors gracefully", async () => {
+      const userId = uuid();
+      const deptId = uuid();
+      const dbError = new Error("Department not found");
+      vi.mocked(prismaClient.users.update).mockRejectedValue(dbError);
+
+      const response = await usersService.addDepartment(userId, deptId);
+
+      expect(prismaClient.users.update).toHaveBeenCalledTimes(1);
+      expect(response).toBeUndefined();
+    });
+  });
+
+  describe("addDepartments", () => {
+    it("should call transaction with uuid and array of strings", async () => {
+      const userId = uuid();
+      const deptNames = ["IT", "HR", "Finance"];
+      const mockDepts = deptNames.map((name, i) => ({ id: uuid(), name, createdAt: new Date(), updatedAt: new Date() }));
+
+      // Mock transaction to execute callback immediately
+      vi.mocked(prismaClient.$transaction).mockImplementation(async (callback: any) => {
+        const tx = {
+          departments: {
+            findMany: vi.fn().mockResolvedValue(mockDepts),
+          },
+          usersDepartments: {
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            create: vi.fn().mockResolvedValue({}),
+          },
+        };
+        return callback(tx);
+      });
+
+      const response = await usersService.addDepartments(userId, deptNames);
+
+      expect(prismaClient.$transaction).toHaveBeenCalledTimes(1);
+      expect(response).toBe(true);
+    });
+
+    it("should throw error if a single string is provided instead of array", async () => {
+      const userId = uuid();
+      const deptId = uuid();
+
+      await expect(usersService.addDepartments(userId, deptId as any)).rejects.toThrow();
+    });
+
+    it("should throw error if userId is not provided", async () => {
+      const deptNames = ["IT", "HR"];
+
+      await expect(usersService.addDepartments(undefined as any, deptNames)).rejects.toThrow("Must provide a valid ID");
+    });
+
+    it("should throw error if departments array is not provided", async () => {
+      const userId = uuid();
+
+      await expect(usersService.addDepartments(userId, undefined as any)).rejects.toThrow();
+    });
+
+    it("should throw error on empty array", async () => {
+      const userId = uuid();
+
+      vi.mocked(prismaClient.$transaction).mockImplementation(async (callback: any) => {
+        const tx = {
+          departments: {
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          usersDepartments: {
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            create: vi.fn().mockResolvedValue({}),
+          },
+        };
+        return callback(tx);
+      });
+
+      await expect(usersService.addDepartments(userId, [])).rejects.toThrow("No departments were added");
+    });
+
+    it("should throw error when departments are not found", async () => {
+      const userId = uuid();
+      const deptNames = ["NonExistent1", "NonExistent2"];
+
+      vi.mocked(prismaClient.$transaction).mockImplementation(async (callback: any) => {
+        const tx = {
+          departments: {
+            findMany: vi.fn().mockResolvedValue([]), // No departments found
+          },
+          usersDepartments: {
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+          },
+        };
+        return callback(tx);
+      });
+
+      await expect(usersService.addDepartments(userId, deptNames)).rejects.toThrow("Departments not found");
+    });
+  });
+});

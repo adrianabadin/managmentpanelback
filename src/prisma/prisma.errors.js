@@ -89,6 +89,10 @@ function isPrismaError(error) {
 }
 exports.isPrismaError = isPrismaError;
 function returnPrismaError(error) {
+    // Si ya es un error custom (GanttError, etc.) con un código específico, retornarlo directamente
+    if (error && typeof error === "object" && "code" in error && error.code && error.code.startsWith("GANTT")) {
+        return error;
+    }
     return isTimeout(error) || notFound(error) || duplicateError(error) || isPrismaError(error) || new UnknownPrismaError(error);
 }
 exports.returnPrismaError = returnPrismaError;

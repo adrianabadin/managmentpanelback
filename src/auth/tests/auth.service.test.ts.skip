@@ -1,0 +1,180 @@
+import { expect, it, describe, vi, afterEach, beforeEach } from "vitest";
+import { Prisma } from "@prisma/client";
+
+// Mock dependencies BEFORE importing
+vi.mock("argon2", () => ({
+  default: {
+    hash: vi.fn(() => Promise.resolve("hashed_password_mock")),
+    verify: vi.fn(() => Promise.resolve(true)),
+  },
+}));
+
+vi.mock("@prisma/client", () => {
+  const mockPrismaClient = {
+    users: {
+      create: vi.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn(),
+    },
+    $disconnect: vi.fn(),
+  };
+
+  return {
+    PrismaClient: vi.fn(() => mockPrismaClient),
+    Prisma: {},
+  };
+});
+
+// Now import after mocking
+import { AuthService } from "../auth.service";
+import argon2 from "argon2";
+
+const mockUserData = {
+  username: "test@example.com",
+  lastname: "TestLastName",
+  name: "TestName",
+  password: "securePassword123",
+};
+
+const mockCreatedUser: Required<Prisma.UsersCreateInput> = {
+  paswordHash: "hashed_password_mock",
+  username: "test@example.com",
+  lastname: "TestLastName",
+  name: "TestName",
+  id: "generated-uuid-123",
+};
+
+describe("AuthService", () => {
+  let authService: AuthService;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    authService = new AuthService();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe("SignUpUser", () => {
+    it("should create user with hashed password when all parameters provided", async () => {
+      const mockCreate = vi.fn().mockResolvedValue(mockCreatedUser);
+      (authService as any).prisma.users.create = mockCreate;
+
+      const response = await authService.SignUpUser(mockUserData);
+
+      expect(argon2.hash).toHaveBeenCalledWith(mockUserData.password);
+      expect(mockCreate).toHaveBeenCalledTimes(1);
+      expect(mockCreate).toHaveBeenCalledWith({
+        data: {
+          paswordHash: "hashed_password_mock",
+          lastname: mockUserData.lastname,
+          name: mockUserData.name,
+          username: mockUserData.username,
+        },
+      });
+      expect(response).toEqual(mockCreatedUser);
+    });
+
+    it("should return undefined when no parameters provided", async () => {
+      const mockCreate = vi.fn();
+      (authService as any).prisma.users.create = mockCreate;
+
+      const response = await authService.SignUpUser(undefined as any);
+
+      expect(mockCreate).not.toHaveBeenCalled();
+      expect(response).toBeUndefined();
+    });
+
+    it("should return undefined when username is missing", async () => {
+      const mockCreate = vi.fn();
+      (authService as any).prisma.users.create = mockCreate;
+
+      const invalidData = {
+        lastname: "TestLastName",
+        name: "TestName",
+        password: "password123",
+      } as any;
+
+      const response = await authService.SignUpUser(invalidData);
+
+      expect(mockCreate).not.toHaveBeenCalled();
+      expect(response).toBeUndefined();
+    });
+
+    it("should return undefined when lastname is missing", async () => {
+      const mockCreate = vi.fn();
+      (authService as any).prisma.users.create = mockCreate;
+
+      const invalidData = {
+        username: "test@example.com",
+        name: "TestName",
+        password: "password123",
+      } as any;
+
+      const response = await authService.SignUpUser(invalidData);
+
+      expect(mockCreate).not.toHaveBeenCalled();
+      expect(response).toBeUndefined();
+    });
+
+    it("should return undefined when name is missing", async () => {
+      const mockCreate = vi.fn();
+      (authService as any).prisma.users.create = mockCreate;
+
+      const invalidData = {
+        username: "test@example.com",
+        lastname: "TestLastName",
+        password: "password123",
+      } as any;
+
+      const response = await authService.SignUpUser(invalidData);
+
+      expect(mockCreate).not.toHaveBeenCalled();
+      expect(response).toBeUndefined();
+    });
+
+    it("should return undefined when password is missing", async () => {
+      const mockCreate = vi.fn();
+      (authService as any).prisma.users.create = mockCreate;
+
+      const invalidData = {
+        username: "test@example.com",
+        lastname: "TestLastName",
+        name: "TestName",
+      } as any;
+
+      const response = await authService.SignUpUser(invalidData);
+
+      expect(mockCreate).not.toHaveBeenCalled();
+      expect(response).toBeUndefined();
+    });
+
+    it("should handle database errors gracefully", async () => {
+      const dbError = new Error("Database constraint violation");
+      const mockCreate = vi.fn().mockRejectedValue(dbError);
+      (authService as any).prisma.users.create = mockCreate;
+
+      const response = await authService.SignUpUser(mockUserData);
+
+      expect(mockCreate).toHaveBeenCalledTimes(1);
+      expect(response).toBeUndefined();
+    });
+  });
+
+  describe("jwtIssuance", () => {
+    it("should generate JWT token with valid id", () => {
+      const token = authService.jwtIssuance("test-user-id");
+
+      expect(token).toBeDefined();
+      expect(typeof token).toBe("string");
+    });
+
+    it("should return IssuanceMissingId error when id is undefined", () => {
+      const result = authService.jwtIssuance(undefined as any);
+
+      expect(result).toBeDefined();
+      expect(result).toHaveProperty("name");
+    });
+  });
+});

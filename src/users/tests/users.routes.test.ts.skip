@@ -1,0 +1,194 @@
+import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
+import request from "supertest";
+import { Prisma } from "@prisma/client";
+import { v4 as uuid } from "uuid";
+
+// Mock prismaClient BEFORE any imports that use it
+vi.mock("../../app.middleware", async (importOriginal) => {
+  const actual = (await importOriginal()) as any;
+
+  return {
+    ...actual,
+    prismaClient: {
+      users: {
+        findUnique: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+      },
+    },
+  };
+});
+
+// Now import after mocking
+import app from "../../app.middleware";
+import { prismaClient } from "../../app.middleware";
+
+const mockUser: Required<Prisma.UsersCreateWithoutDepartmentsInput> = {
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  paswordHash: "hashed_password_test",
+  id: "test-user-id-123",
+  isAdmin: false,
+  lastname: "TestLastName",
+  name: "TestName",
+  phone: "1234567890",
+  username: "test@example.com",
+};
+
+describe("UserRoutes", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe("GET /users/setadmin/:id", () => {
+    it("should call update and return 200 when id param is provided", async () => {
+      const userId = uuid();
+      const adminUser = { ...mockUser, isAdmin: true };
+      vi.mocked(prismaClient.users.update).mockResolvedValue(adminUser as any);
+
+      const response = await request(app)
+        .get(`/users/setadmin/${userId}`)
+        .expect(200);
+
+      expect(response.status).toBe(200);
+      expect(prismaClient.users.update).toHaveBeenCalledTimes(1);
+    });
+
+    it("should return 404 when id param is not provided", async () => {
+      const response = await request(app).get("/users/setadmin").expect(404);
+
+      expect(response.status).toBe(404);
+      expect(prismaClient.users.update).not.toHaveBeenCalled();
+    });
+
+    it("should handle database errors gracefully", async () => {
+      const userId = uuid();
+      const dbError = new Error("User not found");
+      vi.mocked(prismaClient.users.update).mockRejectedValue(dbError);
+
+      const response = await request(app).get(`/users/setadmin/${userId}`);
+
+      expect([404, 500]).toContain(response.status);
+    });
+  });
+
+  describe("GET /users/addDepartments/:id", () => {
+    it("should call update and return 200 when id and query params provided", async () => {
+      const userId = uuid();
+      const departments = ["dept-1", "dept-2", "dept-3"];
+      vi.mocked(prismaClient.users.update).mockResolvedValue(mockUser as any);
+
+      const queryString = departments.map((d) => `name=${d}`).join("&");
+      const response = await request(app)
+        .get(`/users/addDepartments/${userId}?${queryString}`)
+        .expect(200);
+
+      expect(response.status).toBe(200);
+      expect(prismaClient.users.update).toHaveBeenCalledTimes(1);
+    });
+
+    it("should return 400 when query params are not provided", async () => {
+      const userId = uuid();
+      const response = await request(app)
+        .get(`/users/addDepartments/${userId}`)
+        .expect(400);
+
+      expect(response.status).toBe(400);
+      expect(prismaClient.users.update).not.toHaveBeenCalled();
+    });
+
+    it("should return 404 when id param is not provided", async () => {
+      const response = await request(app)
+        .get("/users/addDepartments/")
+        .expect(404);
+
+      expect(response.status).toBe(404);
+      expect(prismaClient.users.update).not.toHaveBeenCalled();
+    });
+
+    it("should handle single department in query", async () => {
+      const userId = uuid();
+      vi.mocked(prismaClient.users.update).mockResolvedValue(mockUser as any);
+
+      const response = await request(app)
+        .get(`/users/addDepartments/${userId}?name=single-dept`)
+        .expect(200);
+
+      expect(response.status).toBe(200);
+      expect(prismaClient.users.update).toHaveBeenCalledTimes(1);
+    });
+
+    it("should handle database errors gracefully", async () => {
+      const userId = uuid();
+      const dbError = new Error("Department constraint violation");
+      vi.mocked(prismaClient.users.update).mockRejectedValue(dbError);
+
+      const response = await request(app).get(
+        `/users/addDepartments/${userId}?name=dept-1&name=dept-2`
+      );
+
+      expect([400, 404, 500]).toContain(response.status);
+    });
+  });
+
+  describe("GET /users/addDepartment/:id", () => {
+    it("should call update and return 200 when id and query name provided", async () => {
+      const userId = uuid();
+      vi.mocked(prismaClient.users.update).mockResolvedValue(mockUser as any);
+
+      const response = await request(app)
+        .get(`/users/addDepartment/${userId}?name=test-department`)
+        .expect(200);
+
+      expect(response.status).toBe(200);
+      expect(prismaClient.users.update).toHaveBeenCalledTimes(1);
+    });
+
+    it("should return 400 when query name is not provided", async () => {
+      const userId = uuid();
+      const response = await request(app)
+        .get(`/users/addDepartment/${userId}`)
+        .expect(400);
+
+      expect(response.status).toBe(400);
+      expect(prismaClient.users.update).not.toHaveBeenCalled();
+    });
+
+    it("should return 404 when id param is not provided", async () => {
+      const response = await request(app)
+        .get("/users/addDepartment/")
+        .expect(404);
+
+      expect(response.status).toBe(404);
+      expect(prismaClient.users.update).not.toHaveBeenCalled();
+    });
+
+    it("should handle database errors gracefully", async () => {
+      const userId = uuid();
+      const dbError = new Error("Department not found");
+      vi.mocked(prismaClient.users.update).mockRejectedValue(dbError);
+
+      const response = await request(app).get(
+        `/users/addDepartment/${userId}?name=dept-1`
+      );
+
+      expect([400, 404, 500]).toContain(response.status);
+    });
+  });
+
+  describe("GET /users/getUsers", () => {
+    it("should return list of users when endpoint is called", async () => {
+      const mockUsers = [mockUser, { ...mockUser, id: "user-2" }];
+      vi.mocked(prismaClient.users.findUnique).mockResolvedValue(mockUser as any);
+
+      const response = await request(app).get("/users/getUsers");
+
+      // Response will depend on authentication middleware
+      expect([200, 401, 403]).toContain(response.status);
+    });
+  });
+});

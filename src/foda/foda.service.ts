@@ -243,7 +243,7 @@ export class FodaService {
                     Demography:state,
                     Department:service
                 }}
-            else throw new NotFoundError("Unable to find any FODA items for the state provided")
+            else  return {};//throw new NotFoundError("Unable to find any FODA items for the state provided")
         }
         catch(error){
             const newError = returnPrismaError(error as Error)

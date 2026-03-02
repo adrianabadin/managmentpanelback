@@ -14,6 +14,7 @@ import taskRouter from './tasks/task.routes';
 import googleRoutes from './google/google.routes';
 import { fodaRouter } from './foda/foda.routes';
 import { gcRoutes } from './gc/gc.routes';
+import ganttRouter from './gantt/gantt.routes';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
@@ -68,6 +69,7 @@ app.use("/tasks",taskRouter)
 app.use("/google",googleRoutes)
 app.use("/foda",fodaRouter)
 app.use("/gc",gcRoutes)
+app.use("/gantt",ganttRouter)
 console.log(process.env.DATABASE_URL,"databaseurl")
 
 export default app

@@ -48,6 +48,7 @@ model Demography {
   hash           String?
   Departments    Departments?     @relation(fields: [departmentsId], references: [id])
   departmentsId  String?
+  GanttItems     GanttItem[]
 }
 
 model Departments {
@@ -69,6 +70,7 @@ model Departments {
   DepartmentUsers UsersDepartments[]
   IssuesByUser    IssuesByUser[]
   isActive        Boolean            @default(true)
+  GanttItems      GanttItem[]        @relation("GanttDepartment")
 }
 
 model UsersDepartments {
@@ -315,6 +317,8 @@ model Users {
   resetToken        String?
   resetTokenExpiry  DateTime?
   isActive          Boolean             @default(true)
+  GanttAssignedTo   GanttItem[]         @relation("GanttAssignedTo")
+  GanttCreatedBy    GanttItem[]         @relation("GanttCreatedBy")
 }
 
 model Weakness {
@@ -368,4 +372,171 @@ enum ROLES {
   inmuno
   sexual
   mental
+}
+
+// ============================================================================
+// GANTT CHART MODULE
+// ============================================================================
+// Modelo de datos para diagrama de Gantt con soporte de:
+//   - Jerarquia parent-child con Materialized Path
+//   - Dependencias entre items (FS, SS, FF, SF) con lag time
+//   - Relacion a Departments y Demography (patron RSX)
+//   - Soft delete via isActive (patron RSX)
+//   - Hash de integridad (requerido por prismaClient2)
+// ============================================================================
+
+model GanttItem {
+  id        String   @id @default(uuid()) @map("_id")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // --- Datos del item ---
+  title       String
+  description String      @default("")
+  startDate   DateTime
+  endDate     DateTime
+  progress    Int         @default(0) // 0-100, validar en servicio
+  priority    Priority    @default(medium)
+  status      GanttStatus @default(planning)
+  type        GanttType   @default(task)
+
+  // --- Campos adicionales recomendados ---
+  sortOrder      Int       @default(0) // Orden visual dentro del mismo nivel
+  estimatedHours Float? // Estimacion de esfuerzo
+  actualHours    Float? // Horas reales trabajadas
+  color          String? // Color hex para UI (ej: "#3B82F6")
+  isActive       Boolean   @default(true) // Soft delete (patron RSX)
+  completedAt    DateTime? // Fecha real de finalizacion
+
+  // --- Jerarquia (Materialized Path + parent reference) ---
+  // path almacena la ruta completa: "/rootId/parentId/thisId/"
+  // Permite queries eficientes de descendientes via startsWith
+  parentId String?
+  parent   GanttItem?  @relation("GanttHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children GanttItem[] @relation("GanttHierarchy")
+  path     String      @default("/") // Materialized path
+  depth    Int         @default(0) // Nivel en el arbol (0 = root)
+
+  // --- Relacion a Departments (patron RSX) ---
+  departmentsId String?
+  department    Departments? @relation("GanttDepartment", fields: [departmentsId], references: [id])
+
+  // --- Relacion a Demography (patron RSX) ---
+  demographyId String?
+  demography   Demography? @relation(fields: [demographyId], references: [id])
+
+  // --- Relacion a Users ---
+  // assignedTo: usuario responsable de ejecutar el item
+  assignedToId String?
+  assignedTo   Users?  @relation("GanttAssignedTo", fields: [assignedToId], references: [id])
+
+  // createdBy: usuario que creo el item (auditoria)
+  createdById String
+  createdBy   Users  @relation("GanttCreatedBy", fields: [createdById], references: [id])
+
+  // --- Dependencias (bidireccional) ---
+  dependenciesFrom GanttDependency[] @relation("DependencySource")
+  dependenciesTo   GanttDependency[] @relation("DependencyTarget")
+
+  // --- Integridad (patron RSX - requerido por prismaClient2) ---
+  hash String?
+
+  // --- INDICES ---
+  // Indices de FK para queries de filtrado directo
+  @@index([departmentsId])
+  @@index([demographyId])
+  @@index([assignedToId])
+  @@index([createdById])
+  // Indice de jerarquia: buscar hijos de un nodo
+  @@index([parentId])
+  // Indice compuesto para queries de rango de fechas
+  // Soporta: WHERE startDate <= :rangeEnd AND endDate >= :rangeStart
+  @@index([startDate, endDate])
+  // Indice para filtrado por estado (dashboard, vistas filtradas)
+  @@index([status])
+  // Indices compuestos para queries frecuentes de negocio:
+  // "Items activos del departamento X" / "Items activos de la localidad Y"
+  @@index([departmentsId, status])
+  @@index([demographyId, status])
+  // Indice para ordenamiento visual dentro de jerarquia
+  @@index([parentId, sortOrder])
+  // Indice para Materialized Path (descendientes de un nodo)
+  @@index([path])
+  // Indice para soft delete filtering
+  @@index([isActive])
+  // Indices para búsqueda avanzada (searchGanttItems)
+  @@index([type]) // Filtrar por tipo (task/milestone/summary)
+  @@index([priority]) // Filtrar por prioridad
+  @@index([progress]) // Filtrar por rango de progreso
+  // Indices compuestos para queries de búsqueda combinadas
+  @@index([isActive, type]) // Items activos por tipo
+  @@index([isActive, status]) // Items activos por estado
+  @@index([type, status]) // Tipo y estado combinados
+}
+
+model GanttDependency {
+  id        String   @id @default(uuid()) @map("_id")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // --- Source: el item que PRECEDE (debe terminar/empezar primero) ---
+  sourceItemId String
+  sourceItem   GanttItem @relation("DependencySource", fields: [sourceItemId], references: [id], onDelete: Cascade)
+
+  // --- Target: el item que DEPENDE (empieza/termina despues) ---
+  targetItemId String
+  targetItem   GanttItem @relation("DependencyTarget", fields: [targetItemId], references: [id], onDelete: Cascade)
+
+  // --- Tipo de dependencia ---
+  type DependencyType @default(endToStart)
+
+  // --- Lag/Lead time en dias ---
+  // Positivo = lag (espera N dias despues de la dependencia)
+  // Negativo = lead (empieza N dias antes de que termine la dependencia)
+  // Ejemplo: lagDays=2 con endToStart = "empieza 2 dias despues de que termine source"
+  lagDays Int @default(0)
+
+  // --- Integridad (patron RSX) ---
+  hash String?
+
+  // --- CONSTRAINTS ---
+  // Previene dependencias duplicadas entre el mismo par de items
+  @@unique([sourceItemId, targetItemId])
+  // --- INDICES ---
+  // Indice individual para "de quien dependo" (buscar por source)
+  @@index([sourceItemId])
+  // Indice individual para "quien depende de mi" (buscar por target)
+  @@index([targetItemId])
+}
+
+// ============================================================================
+// ENUMS DEL MODULO GANTT
+// ============================================================================
+
+enum Priority {
+  low
+  medium
+  high
+  critical
+}
+
+enum GanttStatus {
+  planning // En planificacion, no iniciado
+  active // En ejecucion
+  onhold // Pausado/bloqueado
+  completed // Finalizado exitosamente
+  cancelled // Cancelado
+}
+
+enum GanttType {
+  task // Tarea individual con duracion
+  milestone // Evento puntual (startDate == endDate)
+  summary // Agrupador de subtasks (progress calculado de hijos)
+}
+
+enum DependencyType {
+  endToStart // FS: el mas comun. Target empieza cuando Source termina
+  startToStart // SS: Target empieza cuando Source empieza
+  endToEnd // FF: Target termina cuando Source termina
+  startToEnd // SF: Target termina cuando Source empieza (raro)
 }

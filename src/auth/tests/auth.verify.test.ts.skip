@@ -1,0 +1,223 @@
+import { expect, it, describe, vi, afterEach, beforeEach } from "vitest";
+import { Prisma } from "@prisma/client";
+
+// Create mock instance that will be returned by PrismaClient constructor
+const mockPrismaInstance = {
+  users: {
+    create: vi.fn(),
+    findUnique: vi.fn(),
+    update: vi.fn(),
+  },
+  $disconnect: vi.fn(),
+};
+
+// Mock argon2 BEFORE importing
+vi.mock("argon2", () => ({
+  default: {
+    hash: vi.fn(() => Promise.resolve("hashed_password_mock")),
+    verify: vi.fn(),
+  },
+}));
+
+// Mock PrismaClient constructor to return our mock instance
+vi.mock("@prisma/client", () => ({
+  PrismaClient: vi.fn(() => mockPrismaInstance),
+  Prisma: {},
+}));
+
+// Now import after mocking
+import { AuthVerifyModule } from "../auth.service.verify";
+import argon2 from "argon2";
+
+const mockUser: Required<Prisma.UsersCreateInput> = {
+  paswordHash: "hashed_password_mock",
+  username: "test@example.com",
+  lastname: "TestLastName",
+  name: "TestName",
+  id: "test-user-id-123",
+};
+
+describe("AuthVerifyModule", () => {
+  let authVerify: AuthVerifyModule;
+  let doneSpy: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    authVerify = new AuthVerifyModule();
+    doneSpy = vi.fn();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe("signUpVerify", () => {
+    const validRequest = {
+      body: {
+        lastname: "TestLastName",
+        name: "TestName",
+        password: "securePassword123",
+        username: "test@example.com",
+      },
+    } as any;
+
+    it("should update user when username exists (reactivation)", async () => {
+      const existingUser = { ...mockUser, isActive: false };
+      vi.mocked(mockPrismaInstance.users.findUnique).mockResolvedValue(existingUser as any);
+      vi.mocked(mockPrismaInstance.users.update).mockResolvedValue({ ...mockUser, isActive: true } as any);
+      vi.mocked(argon2.hash).mockResolvedValue("hashed_password_mock");
+
+      await authVerify.signUpVerify(
+        validRequest,
+        "test@example.com",
+        "securePassword123",
+        doneSpy
+      );
+
+      expect(mockPrismaInstance.users.findUnique).toHaveBeenCalledTimes(1);
+      expect(mockPrismaInstance.users.update).toHaveBeenCalledTimes(1);
+      expect(mockPrismaInstance.users.update).toHaveBeenCalledWith({
+        where: { id: existingUser.id },
+        data: {
+          isActive: true,
+          lastname: validRequest.body.lastname,
+          name: validRequest.body.name,
+          paswordHash: "hashed_password_mock",
+        },
+      });
+      expect(doneSpy).toHaveBeenCalledWith(null, expect.objectContaining({ isActive: true }));
+    });
+
+    it("should create new user when username does not exist", async () => {
+      vi.mocked(mockPrismaInstance.users.findUnique).mockResolvedValue(null);
+      // The service will be called which creates the user
+      const newUser = { ...mockUser, username: "TEST@EXAMPLE.COM" };
+
+      // Mock the internal service call - it will call prisma.users.create internally
+      await authVerify.signUpVerify(
+        validRequest,
+        "test@example.com",
+        "securePassword123",
+        doneSpy
+      );
+
+      expect(mockPrismaInstance.users.findUnique).toHaveBeenCalled();
+      // Service is called, which should trigger done callback
+      expect(doneSpy).toHaveBeenCalled();
+    });
+
+    it("should handle request with undefined body", async () => {
+      vi.mocked(mockPrismaInstance.users.findUnique).mockResolvedValue(null);
+
+      const invalidRequest = undefined as any;
+
+      await authVerify.signUpVerify(
+        invalidRequest,
+        undefined as any,
+        undefined as any,
+        doneSpy
+      );
+
+      expect(mockPrismaInstance.users.create).not.toHaveBeenCalled();
+      expect(doneSpy).toHaveBeenCalledWith(expect.any(Error), false);
+    });
+
+    it("should handle database errors during creation", async () => {
+      vi.mocked(mockPrismaInstance.users.findUnique).mockResolvedValue(null);
+      const dbError = new Error("Database constraint violation");
+      vi.mocked(mockPrismaInstance.users.create).mockRejectedValue(dbError);
+
+      await authVerify.signUpVerify(
+        validRequest,
+        "test@example.com",
+        "securePassword123",
+        doneSpy
+      );
+
+      expect(mockPrismaInstance.users.create).toHaveBeenCalledTimes(1);
+      expect(doneSpy).toHaveBeenCalledWith(expect.any(Error), false);
+    });
+  });
+
+  describe("loginVerify", () => {
+    it("should successfully verify valid credentials", async () => {
+      vi.mocked(mockPrismaInstance.users.findUnique).mockResolvedValue(mockUser as any);
+      vi.mocked(argon2.verify).mockResolvedValue(true);
+
+      await authVerify.loginVerify("test@example.com", "correctPassword", doneSpy);
+
+      expect(mockPrismaInstance.users.findUnique).toHaveBeenCalledTimes(1);
+      expect(mockPrismaInstance.users.findUnique).toHaveBeenCalledWith({
+        where: { username: "TEST@EXAMPLE.COM", isActive: true },
+        include: { DepartmentUsers: { include: { Departments: { select: { name: true, id: true } } } } },
+      });
+
+      expect(argon2.verify).toHaveBeenCalledTimes(1);
+      expect(argon2.verify).toHaveBeenCalledWith(
+        mockUser.paswordHash,
+        "correctPassword"
+      );
+
+      expect(doneSpy).toHaveBeenCalledWith(null, mockUser);
+    });
+
+    it("should reject incorrect password", async () => {
+      vi.mocked(mockPrismaInstance.users.findUnique).mockResolvedValue(mockUser as any);
+      vi.mocked(argon2.verify).mockResolvedValue(false);
+
+      await authVerify.loginVerify("test@example.com", "wrongPassword", doneSpy);
+
+      expect(mockPrismaInstance.users.findUnique).toHaveBeenCalledTimes(1);
+      expect(argon2.verify).toHaveBeenCalledTimes(1);
+
+      expect(doneSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.stringContaining("Password"),
+        }),
+        false
+      );
+    });
+
+    it("should reject non-existent user", async () => {
+      vi.mocked(mockPrismaInstance.users.findUnique).mockResolvedValue(null);
+
+      await authVerify.loginVerify("nonexistent@example.com", "anyPassword", doneSpy);
+
+      expect(mockPrismaInstance.users.findUnique).toHaveBeenCalledTimes(1);
+      expect(mockPrismaInstance.users.findUnique).toHaveBeenCalledWith({
+        where: { username: "NONEXISTENT@EXAMPLE.COM", isActive: true },
+        include: { DepartmentUsers: { include: { Departments: { select: { name: true, id: true } } } } },
+      });
+      expect(argon2.verify).not.toHaveBeenCalled();
+
+      expect(doneSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.stringContaining("User"),
+        }),
+        false
+      );
+    });
+
+    it("should handle database errors during login", async () => {
+      const dbError = new Error("Database connection lost");
+      vi.mocked(mockPrismaInstance.users.findUnique).mockRejectedValue(dbError);
+
+      await authVerify.loginVerify("test@example.com", "password", doneSpy);
+
+      expect(mockPrismaInstance.users.findUnique).toHaveBeenCalledTimes(1);
+      expect(doneSpy).toHaveBeenCalledWith(expect.any(Error), false);
+    });
+
+    it("should handle argon2 verification errors", async () => {
+      vi.mocked(mockPrismaInstance.users.findUnique).mockResolvedValue(mockUser as any);
+      const hashError = new Error("Hash verification failed");
+      vi.mocked(argon2.verify).mockRejectedValue(hashError);
+
+      await authVerify.loginVerify("test@example.com", "password", doneSpy);
+
+      expect(mockPrismaInstance.users.findUnique).toHaveBeenCalledTimes(1);
+      expect(argon2.verify).toHaveBeenCalledTimes(1);
+      expect(doneSpy).toHaveBeenCalledWith(expect.any(Error), false);
+    });
+  });
+});

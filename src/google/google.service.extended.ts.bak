@@ -1,0 +1,436 @@
+import { GoogleService } from "./google.service";
+import { google } from "googleapis";
+import { StructuredDocumentRequest } from "./google.interfaces";
+import { logger } from "../Global.Services/logger";
+import {
+  DocumentCreateError,
+  DocumentUpdateError,
+  GoogleError,
+  UnknownGoogleError,
+  invalidCredentials
+} from './google.errors';
+
+/**
+ * Extensión del GoogleService con métodos avanzados para crear documentos estructurados
+ *
+ * Esta clase extiende GoogleService para agregar funcionalidad de generación de reportes
+ * con tablas reales de Google Docs, formato avanzado y compartido multi-usuario.
+ */
+export class GoogleServiceExtended extends GoogleService {
+
+  /**
+   * Crea un documento Google Docs estructurado con:
+   * - Metadata (fecha de generación, autor, departamento)
+   * - Estadísticas resumen (total, completados, en progreso, pendientes)
+   * - Tablas REALES por demography (NO texto plano)
+   * - Links a imágenes en Google Drive
+   * - Compartido con múltiples usuarios (writer permissions)
+   *
+   * @param request - Objeto StructuredDocumentRequest con todos los datos del reporte
+   * @returns documentId del documento creado | GoogleError si falla
+   *
+   * IMPORTANTE: Este método genera tablas REALES usando insertTable + insertText
+   * en celdas específicas. Es complejo porque requiere calcular índices después
+   * de insertar la tabla.
+   *
+   * Flujo:
+   * 1. Crear documento vacío
+   * 2. batchUpdate con estructura (título, metadata, stats, tablas vacías)
+   * 3. documents.get para obtener índices de celdas
+   * 4. batchUpdate para llenar celdas de tablas
+   * 5. permissions.create para compartir con múltiples usuarios
+   */
+  async createStructuredDocumentWithTables(
+    request: StructuredDocumentRequest
+  ): Promise<string | GoogleError> {
+    try {
+      if (GoogleService.authClient === undefined) await this.initiateService();
+
+      const docsClient = google.docs({ version: "v1", auth: GoogleService.authClient });
+      const driveClient = google.drive({ version: "v3", auth: GoogleService.authClient });
+
+      // ========== PASO 1: Crear documento vacío ==========
+      console.log("📄 Creando documento Google Docs...");
+      const document = await docsClient.documents.create({
+        requestBody: {
+          title: request.title
+        }
+      });
+
+      const documentId = document.data.documentId;
+      if (!documentId) throw new DocumentCreateError();
+
+      console.log(`✅ Documento creado: ${documentId}`);
+
+      // ========== PASO 2: Construir batchUpdate requests (estructura) ==========
+      const batchRequests: any[] = [];
+      let currentIndex = 1; // El índice 1 es donde empieza el contenido
+
+      // --- SECCIÓN 1: TÍTULO ---
+      const titleText = request.title + "\n\n";
+      batchRequests.push({
+        insertText: {
+          location: { index: currentIndex },
+          text: titleText
+        }
+      });
+
+      const titleLength = request.title.length;
+      batchRequests.push({
+        updateTextStyle: {
+          range: { startIndex: currentIndex, endIndex: currentIndex + titleLength },
+          textStyle: {
+            bold: true,
+            fontSize: { magnitude: 18, unit: 'PT' }
+          },
+          fields: 'bold,fontSize'
+        }
+      });
+      currentIndex += titleText.length;
+
+      // --- SECCIÓN 2: METADATA ---
+      const metadataLines = [
+        `Fecha de generación: ${request.content.metadata.generatedAt}`,
+        `Generado por: ${request.content.metadata.generatedBy}`,
+        `Departamento: ${request.content.metadata.department}`,
+      ];
+
+      if (request.content.metadata.state) {
+        metadataLines.push(`Estado: ${request.content.metadata.state}`);
+      }
+
+      const metadataText = metadataLines.join('\n') + '\n\n';
+
+      batchRequests.push({
+        insertText: {
+          location: { index: currentIndex },
+          text: metadataText
+        }
+      });
+
+      batchRequests.push({
+        updateTextStyle: {
+          range: { startIndex: currentIndex, endIndex: currentIndex + metadataText.length },
+          textStyle: {
+            fontSize: { magnitude: 10, unit: 'PT' },
+            foregroundColor: {
+              color: {
+                rgbColor: { red: 0.5, green: 0.5, blue: 0.5 }
+              }
+            }
+          },
+          fields: 'fontSize,foregroundColor'
+        }
+      });
+      currentIndex += metadataText.length;
+
+      // --- SECCIÓN 3: ESTADÍSTICAS ---
+      const stats = request.content.statistics;
+      const totalPercentage = stats.total > 0 ? 100 : 0;
+      const completedPercentage = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+      const inProgressPercentage = stats.total > 0 ? Math.round((stats.inProgress / stats.total) * 100) : 0;
+      const pendingPercentage = stats.total > 0 ? Math.round((stats.pending / stats.total) * 100) : 0;
+
+      const statsHeader = "ESTADÍSTICAS GENERALES\n\n";
+      const statsText = [
+        `Total de actividades: ${stats.total}`,
+        `Completadas: ${stats.completed} (${completedPercentage}%)`,
+        `En progreso: ${stats.inProgress} (${inProgressPercentage}%)`,
+        `Pendientes: ${stats.pending} (${pendingPercentage}%)`,
+      ].join('\n') + '\n\n';
+
+      const statsFullText = statsHeader + statsText;
+
+      batchRequests.push({
+        insertText: {
+          location: { index: currentIndex },
+          text: statsFullText
+        }
+      });
+
+      // Bold para el header "ESTADÍSTICAS GENERALES"
+      batchRequests.push({
+        updateTextStyle: {
+          range: { startIndex: currentIndex, endIndex: currentIndex + statsHeader.length - 2 },
+          textStyle: { bold: true, fontSize: { magnitude: 14, unit: 'PT' } },
+          fields: 'bold,fontSize'
+        }
+      });
+      currentIndex += statsFullText.length;
+
+      // --- SECCIÓN 4: TABLAS POR DEMOGRAPHY ---
+      console.log(`📊 Generando ${request.content.demographies.length} tablas...`);
+
+      // IMPORTANTE: No podemos calcular índices después de insertar tablas.
+      // Solo insertamos demographies vacías y tablas vacías en el primer batchUpdate.
+      // El contenido posterior (imágenes, demographies restantes) se agregará en el segundo batchUpdate.
+
+      for (const demography of request.content.demographies) {
+        // Header de la demography
+        const demographyHeader = `\n\n=== ${demography.name} ===\n\n`;
+        batchRequests.push({
+          insertText: {
+            location: { index: currentIndex },
+            text: demographyHeader
+          }
+        });
+
+        batchRequests.push({
+          updateTextStyle: {
+            range: { startIndex: currentIndex + 2, endIndex: currentIndex + demographyHeader.length - 2 },
+            textStyle: { bold: true, fontSize: { magnitude: 14, unit: 'PT' } },
+            fields: 'bold,fontSize'
+          }
+        });
+        currentIndex += demographyHeader.length;
+
+        // Verificar si la demography tiene items o está vacía
+        const isEmpty = demography.hasItems === false || demography.items.length === 0;
+
+        if (isEmpty) {
+          // Usar mensaje personalizado del payload o mensaje por defecto
+          const noItemsText = (demography.emptyMessage || "Sin actividades registradas.") + "\n\n";
+          batchRequests.push({
+            insertText: {
+              location: { index: currentIndex },
+              text: noItemsText
+            }
+          });
+
+          // Estilo italic para el mensaje
+          batchRequests.push({
+            updateTextStyle: {
+              range: { startIndex: currentIndex, endIndex: currentIndex + noItemsText.length - 2 },
+              textStyle: { italic: true },
+              fields: 'italic'
+            }
+          });
+
+          currentIndex += noItemsText.length;
+          continue; // Saltar tabla e imágenes
+        }
+
+        // Insertar tabla vacía (headers + rows)
+        const numRows = demography.items.length + 1; // +1 para header row
+        const numCols = 7; // Título, Inicio, Fin, Progreso, Asignado, Prioridad, Tipo
+
+        batchRequests.push({
+          insertTable: {
+            rows: numRows,
+            columns: numCols,
+            location: { index: currentIndex }
+          }
+        });
+
+        // CRÍTICO: NO intentamos estimar el tamaño de la tabla ni insertar contenido después.
+        // Dejaremos que documents.get nos dé los índices reales en el siguiente paso.
+        // Por ahora, solo marcamos que hay una tabla aquí para llenarla después.
+        // El índice se actualizará cuando hagamos documents.get.
+      }
+
+      // ========== PASO 3: Aplicar batchUpdate inicial (estructura) ==========
+      console.log("📝 Aplicando batchUpdate con estructura base...");
+      await docsClient.documents.batchUpdate({
+        documentId,
+        requestBody: {
+          requests: batchRequests
+        }
+      });
+
+      console.log("✅ Estructura del documento creada");
+
+      // ========== PASO 4: Obtener documento actualizado para conocer índices de tablas ==========
+      console.log("🔍 Obteniendo estructura de tablas...");
+      const updatedDoc = await docsClient.documents.get({ documentId });
+
+      // ========== PASO 5: Llenar tablas con datos (segundo batchUpdate) ==========
+      // IMPORTANTE: Este es el paso más complejo. Requiere parsear updatedDoc.data.body.content
+      // para encontrar las estructuras de tabla y extraer los índices de cada celda.
+
+      const fillRequests: any[] = [];
+
+      // Parsear el body del documento para encontrar tablas
+      const content = updatedDoc.data.body?.content || [];
+
+      // Filtrar solo las demographies que tienen items (y por lo tanto tienen tablas)
+      const demographiesWithItems = request.content.demographies.filter(
+        d => d.hasItems !== false && d.items.length > 0
+      );
+
+      console.log(`📋 Demographies totales: ${request.content.demographies.length}`);
+      console.log(`📊 Demographies con items (con tablas): ${demographiesWithItems.length}`);
+      console.log(`📄 Tablas encontradas en el documento: ${content.filter(e => e.table).length}`);
+
+      let demographyIndex = 0;
+      for (const element of content) {
+        if (element.table) {
+          // Obtener la demography correspondiente a esta tabla
+          const demography = demographiesWithItems[demographyIndex];
+
+          if (!demography) {
+            console.log(`⚠️ No hay demography para la tabla en índice ${demographyIndex}`);
+            continue;
+          }
+
+          console.log(`📝 Procesando tabla para: ${demography.name} (${demography.items.length} items)`);
+
+          const table = element.table;
+          const tableEndIndex = element.endIndex; // El endIndex está en el elemento, no en la tabla
+          const tableRows = table.tableRows || [];
+
+          if (tableRows.length === 0) {
+            demographyIndex++;
+            continue;
+          }
+
+          // HEADER ROW (primera fila)
+          const headerRow = tableRows[0];
+          const headerCells = headerRow.tableCells || [];
+          const headers = ["Título", "Inicio", "Fin", "Progreso", "Asignado", "Prioridad", "Tipo"];
+
+          for (let i = 0; i < Math.min(headers.length, headerCells.length); i++) {
+            const cell = headerCells[i];
+            const cellContent = cell.content || [];
+
+            if (cellContent.length > 0 && cellContent[0].paragraph) {
+              const paragraph = cellContent[0].paragraph;
+              const startIndex = paragraph.elements?.[0]?.startIndex;
+
+              if (startIndex !== undefined && startIndex !== null) {
+                fillRequests.push({
+                  insertText: {
+                    location: { index: startIndex },
+                    text: headers[i]
+                  }
+                });
+
+                // Bold para headers
+                fillRequests.push({
+                  updateTextStyle: {
+                    range: { startIndex: startIndex, endIndex: startIndex + headers[i].length },
+                    textStyle: { bold: true },
+                    fields: 'bold'
+                  }
+                });
+              }
+            }
+          }
+
+          // DATA ROWS (filas de datos)
+          for (let rowIndex = 1; rowIndex < tableRows.length && rowIndex - 1 < demography.items.length; rowIndex++) {
+            const dataRow = tableRows[rowIndex];
+            const dataCells = dataRow.tableCells || [];
+            const item = demography.items[rowIndex - 1];
+
+            const rowData = [
+              item.title,
+              item.startDate,
+              item.endDate,
+              `${item.progress}%`,
+              item.assignedTo,
+              item.priority,
+              item.type
+            ];
+
+            for (let colIndex = 0; colIndex < Math.min(rowData.length, dataCells.length); colIndex++) {
+              const cell = dataCells[colIndex];
+              const cellContent = cell.content || [];
+
+              if (cellContent.length > 0 && cellContent[0].paragraph) {
+                const paragraph = cellContent[0].paragraph;
+                const startIndex = paragraph.elements?.[0]?.startIndex;
+
+                if (startIndex !== undefined) {
+                  fillRequests.push({
+                    insertText: {
+                      location: { index: startIndex },
+                      text: rowData[colIndex]
+                    }
+                  });
+                }
+              }
+            }
+          }
+
+          // Después de llenar la tabla, agregar el texto de imágenes
+          // (tableEndIndex ya está definido arriba)
+
+          // Links a imágenes
+          const imagesHeader = `\nImágenes del Timeline:\n`;
+          const imagesLinks = [];
+
+          if (demography.images?.semester1Id) {
+            imagesLinks.push(`- 1er Semestre: https://drive.google.com/file/d/${demography.images.semester1Id}/view`);
+          }
+          if (demography.images?.semester2Id) {
+            imagesLinks.push(`- 2do Semestre: https://drive.google.com/file/d/${demography.images.semester2Id}/view`);
+          }
+
+          if (imagesLinks.length > 0) {
+            const imagesText = imagesHeader + imagesLinks.join('\n') + '\n\n';
+            fillRequests.push({
+              insertText: {
+                location: { index: tableEndIndex },
+                text: imagesText
+              }
+            });
+          }
+
+          demographyIndex++;
+        }
+      }
+
+      // Aplicar segundo batchUpdate para llenar tablas + agregar imágenes
+      if (fillRequests.length > 0) {
+        console.log(`📝 Llenando ${fillRequests.length} operaciones (celdas + imágenes)...`);
+        await docsClient.documents.batchUpdate({
+          documentId,
+          requestBody: { requests: fillRequests }
+        });
+        console.log("✅ Tablas llenadas con datos e imágenes agregadas");
+      }
+
+      // ========== PASO 6: Compartir documento con múltiples usuarios ==========
+      console.log(`📤 Compartiendo documento con ${request.users.length} usuario(s)...`);
+
+      const permissionPromises = request.users.map(email =>
+        driveClient.permissions.create({
+          fileId: documentId,
+          requestBody: {
+            role: "writer",
+            type: "user",
+            emailAddress: email
+          },
+          fields: "id"
+        }).catch(error => {
+          logger.error({
+            function: "createStructuredDocumentWithTables.shareWithUser",
+            email,
+            error: error.message || error
+          });
+          // No fallar si un permiso falla, continuar con los demás
+          return null;
+        })
+      );
+
+      const results = await Promise.all(permissionPromises);
+      const successfulShares = results.filter(r => r !== null).length;
+
+      console.log(`✅ Documento compartido con ${successfulShares}/${request.users.length} usuarios`);
+
+      return documentId;
+
+    } catch (error) {
+      const parsedError = invalidCredentials(error as Error);
+      if (parsedError instanceof GoogleError) {
+        logger.error({ function: "createStructuredDocumentWithTables", error: parsedError });
+        return parsedError;
+      }
+      logger.error({
+        function: "createStructuredDocumentWithTables",
+        error: new UnknownGoogleError(error)
+      });
+      return new UnknownGoogleError(error);
+    }
+  }
+}

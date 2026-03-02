@@ -134,7 +134,9 @@ class  IntegrityStr implements Models  {
     public strategySO:{validator:AnyZodObject,keys:(keyof Prisma.StrategySOSelect)[]}={validator:strategySOSchema,keys:["description","isActive","title","updatedAt"]}
     public strategyWM:{validator:AnyZodObject,keys:(keyof Prisma.StrategyWMSelect)[]}={validator:strategyWMSchema,keys:["description","isActive","title","updatedAt"]}
     public strategyWO:{validator:AnyZodObject,keys:(keyof Prisma.StrategyWOSelect)[]}={validator:strategyWOSchema,keys:["description","isActive","title","updatedAt"]}
-    public usersDepartments:{validator:AnyZodObject,keys:(keyof Prisma.UsersDepartmentsSelect)[]}={validator:z.object({}),keys:[]}
+    public usersDepartments:{validator:AnyZodObject,keys:(keyof Prisma.UsersDepartmentsSelect)[]}={validator:z.object({}),keys:[] as (keyof Prisma.UsersDepartmentsSelect)[]}
+    public ganttItem:{validator:AnyZodObject,keys:(keyof Prisma.GanttItemSelect)[]}={validator:z.object({}),keys:[] as (keyof Prisma.GanttItemSelect)[]}
+    public ganttDependency:{validator:AnyZodObject,keys:(keyof Prisma.GanttDependencySelect)[]}={validator:z.object({}),keys:[] as (keyof Prisma.GanttDependencySelect)[]}
 }
 const integrityObject = new IntegrityStr()
 

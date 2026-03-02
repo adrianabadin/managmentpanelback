@@ -1,0 +1,92 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { Prisma } from "@prisma/client";
+
+// Mock prismaClient BEFORE importing anything that uses it
+vi.mock("../../app.middleware", () => ({
+  default: {},
+  prismaClient: {
+    users: {
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+    },
+  },
+}));
+
+// Now import after mocking
+import { AuthController } from "../auth.controller";
+import { prismaClient } from "../../app.middleware";
+
+const mockUser: Required<Prisma.UsersCreateInput> = {
+  paswordHash: "hashed_password_test",
+  username: "test@example.com",
+  lastname: "TestLastName",
+  name: "TestName",
+  id: "test-user-id-123",
+};
+
+describe("AuthController", () => {
+  let authController: AuthController;
+  let doneSpy: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    authController = new AuthController(prismaClient);
+    doneSpy = vi.fn();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe("serialize", () => {
+    it("should call done callback with null and user id", async () => {
+      await authController.serialize(mockUser, doneSpy);
+
+      expect(doneSpy).toHaveBeenCalledTimes(1);
+      expect(doneSpy).toHaveBeenCalledWith(null, "test-user-id-123");
+    });
+
+    it("should handle user without id gracefully", async () => {
+      const userWithoutId = { ...mockUser, id: undefined as any };
+
+      await authController.serialize(userWithoutId, doneSpy);
+
+      expect(doneSpy).toHaveBeenCalledWith(null, undefined);
+    });
+  });
+
+  describe("deSerialize", () => {
+    beforeEach(() => {
+      vi.mocked(prismaClient.users.findUnique).mockResolvedValue(mockUser as any);
+    });
+
+    it("should call done callback with null and user object", async () => {
+      await authController.deSerialize("test-user-id-123", doneSpy);
+
+      expect(prismaClient.users.findUnique).toHaveBeenCalledTimes(1);
+      expect(prismaClient.users.findUnique).toHaveBeenCalledWith({
+        where: { id: "test-user-id-123" },
+      });
+      expect(doneSpy).toHaveBeenCalledWith(null, mockUser);
+    });
+
+    it("should handle database errors gracefully", async () => {
+      const dbError = new Error("Database connection failed");
+      vi.mocked(prismaClient.users.findUnique).mockRejectedValue(dbError);
+
+      await authController.deSerialize("test-user-id-123", doneSpy);
+
+      expect(prismaClient.users.findUnique).toHaveBeenCalledTimes(1);
+      expect(doneSpy).toHaveBeenCalledWith(dbError, false);
+    });
+
+    it("should handle user not found", async () => {
+      vi.mocked(prismaClient.users.findUnique).mockResolvedValue(null);
+
+      await authController.deSerialize("non-existent-id", doneSpy);
+
+      expect(doneSpy).toHaveBeenCalledWith(null, null);
+    });
+  });
+});

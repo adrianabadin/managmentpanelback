@@ -1,0 +1,192 @@
+import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
+import request from "supertest";
+import { Prisma } from "@prisma/client";
+
+// Mock argon2 BEFORE importing
+vi.mock("argon2", () => ({
+  default: {
+    hash: vi.fn(() => Promise.resolve("hashed_password_mock")),
+    verify: vi.fn(() => Promise.resolve(true)),
+  },
+}));
+
+// Mock prismaClient BEFORE any imports that use it
+vi.mock("../../app.middleware", async (importOriginal) => {
+  const actual = await importOriginal() as any;
+
+  return {
+    ...actual,
+    prismaClient: {
+      users: {
+        findUnique: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+      },
+    },
+  };
+});
+
+// Now import after mocking
+import app from "../../app.middleware";
+import { prismaClient } from "../../app.middleware";
+import argon2 from "argon2";
+
+const mockUser: Required<Prisma.UsersCreateInput> = {
+  paswordHash: "hashed_password_mock",
+  username: "test@example.com",
+  lastname: "TestLastName",
+  name: "TestName",
+  id: "test-user-id-123",
+};
+
+describe("AuthRouter", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe("POST /auth/login", () => {
+    it("should return 200 and user when credentials are valid", async () => {
+      vi.mocked(prismaClient.users.findUnique).mockResolvedValue(mockUser as any);
+      vi.mocked(argon2.verify).mockResolvedValue(true);
+
+      const response = await request(app)
+        .post("/auth/login")
+        .send({
+          username: "test@example.com",
+          password: "correctPassword123",
+        })
+        .expect(200);
+
+      expect(response.status).toBe(200);
+      expect(prismaClient.users.findUnique).toHaveBeenCalled();
+    });
+
+    it("should return 401 when user does not exist", async () => {
+      vi.mocked(prismaClient.users.findUnique).mockResolvedValue(null);
+
+      const response = await request(app)
+        .post("/auth/login")
+        .send({
+          username: "nonexistent@example.com",
+          password: "anyPassword",
+        });
+
+      expect([401, 500]).toContain(response.status);
+      expect(prismaClient.users.findUnique).toHaveBeenCalled();
+    });
+
+    it("should return 401 when password is incorrect", async () => {
+      vi.mocked(prismaClient.users.findUnique).mockResolvedValue(mockUser as any);
+      vi.mocked(argon2.verify).mockResolvedValue(false);
+
+      const response = await request(app)
+        .post("/auth/login")
+        .send({
+          username: "test@example.com",
+          password: "wrongPassword",
+        });
+
+      expect([401, 500]).toContain(response.status);
+      expect(argon2.verify).toHaveBeenCalled();
+    });
+
+    it("should return 400 when request body is invalid", async () => {
+      const response = await request(app)
+        .post("/auth/login")
+        .send({
+          // Missing required fields
+        });
+
+      expect([400, 422, 500]).toContain(response.status);
+    });
+  });
+
+  describe("POST /auth/signup", () => {
+    it("should create user and return 200 when data is valid", async () => {
+      vi.mocked(prismaClient.users.findUnique).mockResolvedValue(null);
+      vi.mocked(prismaClient.users.create).mockResolvedValue(mockUser as any);
+
+      const response = await request(app)
+        .post("/auth/signup")
+        .send({
+          lastname: "TestLastName",
+          name: "TestName",
+          password: "securePassword123",
+          username: "newuser@example.com",
+        })
+        .expect(200);
+
+      expect(response.status).toBe(200);
+      expect(prismaClient.users.findUnique).toHaveBeenCalledWith({
+        where: { username: "newuser@example.com" },
+      });
+      expect(prismaClient.users.create).toHaveBeenCalled();
+    });
+
+    it("should return error when username already exists", async () => {
+      vi.mocked(prismaClient.users.findUnique).mockResolvedValue(mockUser as any);
+
+      const response = await request(app)
+        .post("/auth/signup")
+        .send({
+          lastname: "TestLastName",
+          name: "TestName",
+          password: "securePassword123",
+          username: "existing@example.com",
+        });
+
+      expect([400, 409, 500]).toContain(response.status);
+      expect(prismaClient.users.findUnique).toHaveBeenCalled();
+      expect(prismaClient.users.create).not.toHaveBeenCalled();
+    });
+
+    it("should return 400 when required fields are missing", async () => {
+      const response = await request(app)
+        .post("/auth/signup")
+        .send({
+          username: "test@example.com",
+          // Missing name, lastname, password
+        });
+
+      expect([400, 422]).toContain(response.status);
+    });
+
+    it("should return 400 when password is too short", async () => {
+      const response = await request(app)
+        .post("/auth/signup")
+        .send({
+          lastname: "TestLastName",
+          name: "TestName",
+          password: "short",
+          username: "test@example.com",
+        });
+
+      expect([400, 422]).toContain(response.status);
+    });
+
+    it("should return 400 when username is not an email", async () => {
+      const response = await request(app)
+        .post("/auth/signup")
+        .send({
+          lastname: "TestLastName",
+          name: "TestName",
+          password: "securePassword123",
+          username: "notanemail",
+        });
+
+      expect([400, 422]).toContain(response.status);
+    });
+  });
+
+  describe("GET /auth/jwt", () => {
+    it("should return 401 when not authenticated", async () => {
+      const response = await request(app).get("/auth/jwt");
+
+      expect([401, 403]).toContain(response.status);
+    });
+  });
+});

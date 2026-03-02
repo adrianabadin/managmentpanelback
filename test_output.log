@@ -1,0 +1,381 @@
+./logs
+
+🧪 Iniciando prueba de GoogleServiceExtended...
+
+🗄️ Buscando datos existentes en la base de datos...
+✅ Usuario encontrado: Nicolas
+✅ Departamento encontrado: Embarazo Adolecente
+✅ Demografías encontradas: 2
+✅ GanttItems encontrados: 0
+
+📝 Preparando solicitud para Google Docs...
+
+📊 Estructura de la solicitud:
+- Título: Reporte de Planificación 2026 - Test
+- Usuario: NICOLASGIACCONE5@GMAIL.COM
+- Demographies: 2
+- Items por demography: 0
+- Estadísticas: { total: 0, completed: 0, inProgress: 0, pending: 0 }
+
+🚀 Ejecutando createStructuredDocumentWithTablesAndPrivateImages...
+
+📄 Creando documento Google Docs...
+✅ Documento creado: 1DTMYeHoNdNNbMUJTk2C05gaJYGY9wDmFRMoIYLMw1KU
+📝 Construyendo estructura del documento...
+📊 Generando 2 tablas con soporte para imágenes privadas...
+📝 Aplicando estructura base con placeholders...
+✅ Estructura del documento creada con placeholders para imágenes
+🔍 Obteniendo estructura para procesar imágenes...
+🖼️ Procesando imágenes privadas y llenando tablas...
+📊 Tablas esperadas: 0
+🖼️ Placeholder detectado: {{DRIVE_MEDIA:sem1:1ABcExampleID1}} (ID: 1ABcExampleID1) en index 347
+Error en getDriveFileAccess: GaxiosError: File not found: 1ABcExampleID1.
+    at Gaxios._request (C:\Users\Adria\Documents\code\rsx\managmentpanelback\node_modules\gaxios\src\gaxios.ts:174:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async JWT.requestAsync (C:\Users\Adria\Documents\code\rsx\managmentpanelback\node_modules\google-auth-library\build\src\auth\oauth2client.js:405:18)
+    at GoogleServiceExtended.getDriveFileAccess (c:\Users\Adria\Documents\code\rsx\managmentpanelback\src\google\google.service.extended.ts:44:20)
+    at GoogleServiceExtended.createStructuredDocumentWithTablesAndPrivateImages (c:\Users\Adria\Documents\code\rsx\managmentpanelback\src\google\google.service.extended.ts:345:35)
+    at testNewGoogleService (c:\Users\Adria\Documents\code\rsx\managmentpanelback\src\google\test-new-function.ts:138:20) {
+  config: {
+    url: 'https://www.googleapis.com/drive/v3/files/1ABcExampleID1?fields=id%2C%20name%2C%20mimeType%2C%20webViewLink%2C%20webContentLink',
+    method: 'GET',
+    userAgentDirectives: [ [Object] ],
+    paramsSerializer: [Function (anonymous)],
+    headers: {
+      'x-goog-api-client': 'gdcl/7.0.1 gl-node/20.10.0',
+      'Accept-Encoding': 'gzip',
+      'User-Agent': 'google-api-nodejs-client/7.0.1 (gzip)',
+      Authorization: 'Bearer ya29.c.c0AZ4bNpbDuCsoypAZbabrH9huVKmsrsyI5qDOHr_OR7Nft77n-e4HvFqN_UM9-aLJhvUaPxJs0sgch4ecA8-3I7ZcnGUZdlaIbPN4mGly22m9nOSG2L7PQLq0dr2LW9B5o6yAxFpnxcNwhCy4Zatlb2iNMiahe22D_0f0w1vk5moX8zQug7fNp-_h9gboExZAzelpNZZQ2YEHaNgZTkBj8P2v6oamvc9ORxET2TcCz9R7aBBtAhSDcBmF0yln9ZMB-NSBVtfZR3uRe40A-w8Mk_kr5KOzdk6Nml_BKF8-hDOkEMhjP2G-mQ8gn62OnLLhqnJ1-Zw1wEyBcBzxoQNUuzESDdrljiSGuyQH7I_8h0xQ_A1F2JsH850hCd0T388PssgcyvrR4gwmMOlWl6YsSScU1bSu1Jxv9Zspr0_b61sW1fe96RZFJfjY1Whniozql6du0Jc8znU5I9s4xwpdmqdndJYYoreIbh1aInS8WbudOb3UjfIez_YI6Wrfb0MekY9_jsX1u0YSpr-OdtIy0w9fqxez09m98gztOVYWyyJlboatkBaaat48evzwXx135XOOfqB5W22q9yb94aMB8m2M7UilIavrre9jg_InsVRmaBZ-m_4ud9cMq0R_fmiSU5viwzVf8j_m63UzVVgR5Y2ftBMxStsp-Xi1iybSm-pWyyZfaabY-QfQBcj2ar33oSanqc3Ott6Uvc9boxf1tV2mIymrVXzZYhs94zRft2g47xnxxUZ2ncBpM3FapX4e9tIn2t9Vc3VrpSaapFJbZ7Y7l1l2MXwezQWtqrWnxlqofh7nOX9cy1z6ed92ezcylnssvzM_dI866ReVzUlIWti6WVUcfdR9tY679OcsZMo4x617v5O0sS0iny3qOkq3som4qs7jRjcno3Xw8xsRsbrSJ3c3ubB8Ow-mQ_zQ4MF-wxXxq_4V6BebQ-lp_O-uXna5z-_Bp2j-YJqXBz_ydmRYojIun-j81RnFJ7iXliynmBgYrqShzxg'
+    },
+    params: { fields: 'id, name, mimeType, webViewLink, webContentLink' },
+    validateStatus: [Function (anonymous)],
+    retry: true,
+    responseType: 'unknown',
+    errorRedactor: [Function: defaultErrorRedactor],
+    retryConfig: {
+      currentRetryAttempt: 0,
+      retry: 3,
+      httpMethodsToRetry: [Array],
+      noResponseRetries: 2,
+      statusCodesToRetry: [Array]
+    }
+  },
+  response: {
+    config: {
+      url: 'https://www.googleapis.com/drive/v3/files/1ABcExampleID1?fields=id%2C%20name%2C%20mimeType%2C%20webViewLink%2C%20webContentLink',
+      method: 'GET',
+      userAgentDirectives: [Array],
+      paramsSerializer: [Function (anonymous)],
+      headers: [Object],
+      params: [Object],
+      validateStatus: [Function (anonymous)],
+      retry: true,
+      responseType: 'unknown',
+      errorRedactor: [Function: defaultErrorRedactor]
+    },
+    data: { error: [Object] },
+    headers: {
+      'alt-svc': 'h3=":443"; ma=2592000,h3-29=":443"; ma=2592000',
+      'cache-control': 'private, max-age=0',
+      'content-encoding': 'gzip',
+      'content-type': 'application/json; charset=UTF-8',
+      date: 'Mon, 16 Feb 2026 02:12:35 GMT',
+      expires: 'Mon, 16 Feb 2026 02:12:35 GMT',
+      server: 'ESF',
+      'transfer-encoding': 'chunked',
+      vary: 'Origin, X-Origin',
+      'x-content-type-options': 'nosniff',
+      'x-frame-options': 'SAMEORIGIN',
+      'x-xss-protection': '0'
+    },
+    status: 404,
+    statusText: 'Not Found',
+    request: {
+      responseURL: 'https://www.googleapis.com/drive/v3/files/1ABcExampleID1?fields=id%2C%20name%2C%20mimeType%2C%20webViewLink%2C%20webContentLink'
+    }
+  },
+  error: undefined,
+  status: 404,
+  code: 404,
+  errors: [
+    {
+      message: 'File not found: 1ABcExampleID1.',
+      domain: 'global',
+      reason: 'notFound',
+      location: 'fileId',
+      locationType: 'parameter'
+    }
+  ],
+  [Symbol(gaxios-gaxios-error)]: '6.2.0'
+}
+{
+  message: '❌ Falló acceso a imagen 1ABcExampleID1',
+  level: 'error',
+  timestamp: '2026-02-16T02:12:35.630Z'
+}
+🖼️ Placeholder detectado: {{DRIVE_MEDIA:sem2:1ABcExampleID2}} (ID: 1ABcExampleID2) en index 399
+Error en getDriveFileAccess: GaxiosError: File not found: 1ABcExampleID2.
+    at Gaxios._request (C:\Users\Adria\Documents\code\rsx\managmentpanelback\node_modules\gaxios\src\gaxios.ts:174:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async JWT.requestAsync (C:\Users\Adria\Documents\code\rsx\managmentpanelback\node_modules\google-auth-library\build\src\auth\oauth2client.js:405:18)
+    at GoogleServiceExtended.getDriveFileAccess (c:\Users\Adria\Documents\code\rsx\managmentpanelback\src\google\google.service.extended.ts:44:20)
+    at GoogleServiceExtended.createStructuredDocumentWithTablesAndPrivateImages (c:\Users\Adria\Documents\code\rsx\managmentpanelback\src\google\google.service.extended.ts:345:35)
+    at testNewGoogleService (c:\Users\Adria\Documents\code\rsx\managmentpanelback\src\google\test-new-function.ts:138:20) {
+  config: {
+    url: 'https://www.googleapis.com/drive/v3/files/1ABcExampleID2?fields=id%2C%20name%2C%20mimeType%2C%20webViewLink%2C%20webContentLink',
+    method: 'GET',
+    userAgentDirectives: [ [Object] ],
+    paramsSerializer: [Function (anonymous)],
+    headers: {
+      'x-goog-api-client': 'gdcl/7.0.1 gl-node/20.10.0',
+      'Accept-Encoding': 'gzip',
+      'User-Agent': 'google-api-nodejs-client/7.0.1 (gzip)',
+      Authorization: 'Bearer ya29.c.c0AZ4bNpbDuCsoypAZbabrH9huVKmsrsyI5qDOHr_OR7Nft77n-e4HvFqN_UM9-aLJhvUaPxJs0sgch4ecA8-3I7ZcnGUZdlaIbPN4mGly22m9nOSG2L7PQLq0dr2LW9B5o6yAxFpnxcNwhCy4Zatlb2iNMiahe22D_0f0w1vk5moX8zQug7fNp-_h9gboExZAzelpNZZQ2YEHaNgZTkBj8P2v6oamvc9ORxET2TcCz9R7aBBtAhSDcBmF0yln9ZMB-NSBVtfZR3uRe40A-w8Mk_kr5KOzdk6Nml_BKF8-hDOkEMhjP2G-mQ8gn62OnLLhqnJ1-Zw1wEyBcBzxoQNUuzESDdrljiSGuyQH7I_8h0xQ_A1F2JsH850hCd0T388PssgcyvrR4gwmMOlWl6YsSScU1bSu1Jxv9Zspr0_b61sW1fe96RZFJfjY1Whniozql6du0Jc8znU5I9s4xwpdmqdndJYYoreIbh1aInS8WbudOb3UjfIez_YI6Wrfb0MekY9_jsX1u0YSpr-OdtIy0w9fqxez09m98gztOVYWyyJlboatkBaaat48evzwXx135XOOfqB5W22q9yb94aMB8m2M7UilIavrre9jg_InsVRmaBZ-m_4ud9cMq0R_fmiSU5viwzVf8j_m63UzVVgR5Y2ftBMxStsp-Xi1iybSm-pWyyZfaabY-QfQBcj2ar33oSanqc3Ott6Uvc9boxf1tV2mIymrVXzZYhs94zRft2g47xnxxUZ2ncBpM3FapX4e9tIn2t9Vc3VrpSaapFJbZ7Y7l1l2MXwezQWtqrWnxlqofh7nOX9cy1z6ed92ezcylnssvzM_dI866ReVzUlIWti6WVUcfdR9tY679OcsZMo4x617v5O0sS0iny3qOkq3som4qs7jRjcno3Xw8xsRsbrSJ3c3ubB8Ow-mQ_zQ4MF-wxXxq_4V6BebQ-lp_O-uXna5z-_Bp2j-YJqXBz_ydmRYojIun-j81RnFJ7iXliynmBgYrqShzxg'
+    },
+    params: { fields: 'id, name, mimeType, webViewLink, webContentLink' },
+    validateStatus: [Function (anonymous)],
+    retry: true,
+    responseType: 'unknown',
+    errorRedactor: [Function: defaultErrorRedactor],
+    retryConfig: {
+      currentRetryAttempt: 0,
+      retry: 3,
+      httpMethodsToRetry: [Array],
+      noResponseRetries: 2,
+      statusCodesToRetry: [Array]
+    }
+  },
+  response: {
+    config: {
+      url: 'https://www.googleapis.com/drive/v3/files/1ABcExampleID2?fields=id%2C%20name%2C%20mimeType%2C%20webViewLink%2C%20webContentLink',
+      method: 'GET',
+      userAgentDirectives: [Array],
+      paramsSerializer: [Function (anonymous)],
+      headers: [Object],
+      params: [Object],
+      validateStatus: [Function (anonymous)],
+      retry: true,
+      responseType: 'unknown',
+      errorRedactor: [Function: defaultErrorRedactor]
+    },
+    data: { error: [Object] },
+    headers: {
+      'alt-svc': 'h3=":443"; ma=2592000,h3-29=":443"; ma=2592000',
+      'cache-control': 'private, max-age=0',
+      'content-encoding': 'gzip',
+      'content-type': 'application/json; charset=UTF-8',
+      date: 'Mon, 16 Feb 2026 02:12:35 GMT',
+      expires: 'Mon, 16 Feb 2026 02:12:35 GMT',
+      server: 'ESF',
+      'transfer-encoding': 'chunked',
+      vary: 'Origin, X-Origin',
+      'x-content-type-options': 'nosniff',
+      'x-frame-options': 'SAMEORIGIN',
+      'x-xss-protection': '0'
+    },
+    status: 404,
+    statusText: 'Not Found',
+    request: {
+      responseURL: 'https://www.googleapis.com/drive/v3/files/1ABcExampleID2?fields=id%2C%20name%2C%20mimeType%2C%20webViewLink%2C%20webContentLink'
+    }
+  },
+  error: undefined,
+  status: 404,
+  code: 404,
+  errors: [
+    {
+      message: 'File not found: 1ABcExampleID2.',
+      domain: 'global',
+      reason: 'notFound',
+      location: 'fileId',
+      locationType: 'parameter'
+    }
+  ],
+  [Symbol(gaxios-gaxios-error)]: '6.2.0'
+}
+{
+  message: '❌ Falló acceso a imagen 1ABcExampleID2',
+  level: 'error',
+  timestamp: '2026-02-16T02:12:35.863Z'
+}
+🖼️ Placeholder detectado: {{DRIVE_MEDIA:sem1:1ABcExampleID1}} (ID: 1ABcExampleID1) en index 524
+Error en getDriveFileAccess: GaxiosError: File not found: 1ABcExampleID1.
+    at Gaxios._request (C:\Users\Adria\Documents\code\rsx\managmentpanelback\node_modules\gaxios\src\gaxios.ts:174:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async JWT.requestAsync (C:\Users\Adria\Documents\code\rsx\managmentpanelback\node_modules\google-auth-library\build\src\auth\oauth2client.js:405:18)
+    at GoogleServiceExtended.getDriveFileAccess (c:\Users\Adria\Documents\code\rsx\managmentpanelback\src\google\google.service.extended.ts:44:20)
+    at GoogleServiceExtended.createStructuredDocumentWithTablesAndPrivateImages (c:\Users\Adria\Documents\code\rsx\managmentpanelback\src\google\google.service.extended.ts:345:35)
+    at testNewGoogleService (c:\Users\Adria\Documents\code\rsx\managmentpanelback\src\google\test-new-function.ts:138:20) {
+  config: {
+    url: 'https://www.googleapis.com/drive/v3/files/1ABcExampleID1?fields=id%2C%20name%2C%20mimeType%2C%20webViewLink%2C%20webContentLink',
+    method: 'GET',
+    userAgentDirectives: [ [Object] ],
+    paramsSerializer: [Function (anonymous)],
+    headers: {
+      'x-goog-api-client': 'gdcl/7.0.1 gl-node/20.10.0',
+      'Accept-Encoding': 'gzip',
+      'User-Agent': 'google-api-nodejs-client/7.0.1 (gzip)',
+      Authorization: 'Bearer ya29.c.c0AZ4bNpbDuCsoypAZbabrH9huVKmsrsyI5qDOHr_OR7Nft77n-e4HvFqN_UM9-aLJhvUaPxJs0sgch4ecA8-3I7ZcnGUZdlaIbPN4mGly22m9nOSG2L7PQLq0dr2LW9B5o6yAxFpnxcNwhCy4Zatlb2iNMiahe22D_0f0w1vk5moX8zQug7fNp-_h9gboExZAzelpNZZQ2YEHaNgZTkBj8P2v6oamvc9ORxET2TcCz9R7aBBtAhSDcBmF0yln9ZMB-NSBVtfZR3uRe40A-w8Mk_kr5KOzdk6Nml_BKF8-hDOkEMhjP2G-mQ8gn62OnLLhqnJ1-Zw1wEyBcBzxoQNUuzESDdrljiSGuyQH7I_8h0xQ_A1F2JsH850hCd0T388PssgcyvrR4gwmMOlWl6YsSScU1bSu1Jxv9Zspr0_b61sW1fe96RZFJfjY1Whniozql6du0Jc8znU5I9s4xwpdmqdndJYYoreIbh1aInS8WbudOb3UjfIez_YI6Wrfb0MekY9_jsX1u0YSpr-OdtIy0w9fqxez09m98gztOVYWyyJlboatkBaaat48evzwXx135XOOfqB5W22q9yb94aMB8m2M7UilIavrre9jg_InsVRmaBZ-m_4ud9cMq0R_fmiSU5viwzVf8j_m63UzVVgR5Y2ftBMxStsp-Xi1iybSm-pWyyZfaabY-QfQBcj2ar33oSanqc3Ott6Uvc9boxf1tV2mIymrVXzZYhs94zRft2g47xnxxUZ2ncBpM3FapX4e9tIn2t9Vc3VrpSaapFJbZ7Y7l1l2MXwezQWtqrWnxlqofh7nOX9cy1z6ed92ezcylnssvzM_dI866ReVzUlIWti6WVUcfdR9tY679OcsZMo4x617v5O0sS0iny3qOkq3som4qs7jRjcno3Xw8xsRsbrSJ3c3ubB8Ow-mQ_zQ4MF-wxXxq_4V6BebQ-lp_O-uXna5z-_Bp2j-YJqXBz_ydmRYojIun-j81RnFJ7iXliynmBgYrqShzxg'
+    },
+    params: { fields: 'id, name, mimeType, webViewLink, webContentLink' },
+    validateStatus: [Function (anonymous)],
+    retry: true,
+    responseType: 'unknown',
+    errorRedactor: [Function: defaultErrorRedactor],
+    retryConfig: {
+      currentRetryAttempt: 0,
+      retry: 3,
+      httpMethodsToRetry: [Array],
+      noResponseRetries: 2,
+      statusCodesToRetry: [Array]
+    }
+  },
+  response: {
+    config: {
+      url: 'https://www.googleapis.com/drive/v3/files/1ABcExampleID1?fields=id%2C%20name%2C%20mimeType%2C%20webViewLink%2C%20webContentLink',
+      method: 'GET',
+      userAgentDirectives: [Array],
+      paramsSerializer: [Function (anonymous)],
+      headers: [Object],
+      params: [Object],
+      validateStatus: [Function (anonymous)],
+      retry: true,
+      responseType: 'unknown',
+      errorRedactor: [Function: defaultErrorRedactor]
+    },
+    data: { error: [Object] },
+    headers: {
+      'alt-svc': 'h3=":443"; ma=2592000,h3-29=":443"; ma=2592000',
+      'cache-control': 'private, max-age=0',
+      'content-encoding': 'gzip',
+      'content-type': 'application/json; charset=UTF-8',
+      date: 'Mon, 16 Feb 2026 02:12:36 GMT',
+      expires: 'Mon, 16 Feb 2026 02:12:36 GMT',
+      server: 'ESF',
+      'transfer-encoding': 'chunked',
+      vary: 'Origin, X-Origin',
+      'x-content-type-options': 'nosniff',
+      'x-frame-options': 'SAMEORIGIN',
+      'x-xss-protection': '0'
+    },
+    status: 404,
+    statusText: 'Not Found',
+    request: {
+      responseURL: 'https://www.googleapis.com/drive/v3/files/1ABcExampleID1?fields=id%2C%20name%2C%20mimeType%2C%20webViewLink%2C%20webContentLink'
+    }
+  },
+  error: undefined,
+  status: 404,
+  code: 404,
+  errors: [
+    {
+      message: 'File not found: 1ABcExampleID1.',
+      domain: 'global',
+      reason: 'notFound',
+      location: 'fileId',
+      locationType: 'parameter'
+    }
+  ],
+  [Symbol(gaxios-gaxios-error)]: '6.2.0'
+}
+{
+  message: '❌ Falló acceso a imagen 1ABcExampleID1',
+  level: 'error',
+  timestamp: '2026-02-16T02:12:36.082Z'
+}
+🖼️ Placeholder detectado: {{DRIVE_MEDIA:sem2:1ABcExampleID2}} (ID: 1ABcExampleID2) en index 576
+Error en getDriveFileAccess: GaxiosError: File not found: 1ABcExampleID2.
+    at Gaxios._request (C:\Users\Adria\Documents\code\rsx\managmentpanelback\node_modules\gaxios\src\gaxios.ts:174:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async JWT.requestAsync (C:\Users\Adria\Documents\code\rsx\managmentpanelback\node_modules\google-auth-library\build\src\auth\oauth2client.js:405:18)
+    at GoogleServiceExtended.getDriveFileAccess (c:\Users\Adria\Documents\code\rsx\managmentpanelback\src\google\google.service.extended.ts:44:20)
+    at GoogleServiceExtended.createStructuredDocumentWithTablesAndPrivateImages (c:\Users\Adria\Documents\code\rsx\managmentpanelback\src\google\google.service.extended.ts:345:35)
+    at testNewGoogleService (c:\Users\Adria\Documents\code\rsx\managmentpanelback\src\google\test-new-function.ts:138:20) {
+  config: {
+    url: 'https://www.googleapis.com/drive/v3/files/1ABcExampleID2?fields=id%2C%20name%2C%20mimeType%2C%20webViewLink%2C%20webContentLink',
+    method: 'GET',
+    userAgentDirectives: [ [Object] ],
+    paramsSerializer: [Function (anonymous)],
+    headers: {
+      'x-goog-api-client': 'gdcl/7.0.1 gl-node/20.10.0',
+      'Accept-Encoding': 'gzip',
+      'User-Agent': 'google-api-nodejs-client/7.0.1 (gzip)',
+      Authorization: 'Bearer ya29.c.c0AZ4bNpbDuCsoypAZbabrH9huVKmsrsyI5qDOHr_OR7Nft77n-e4HvFqN_UM9-aLJhvUaPxJs0sgch4ecA8-3I7ZcnGUZdlaIbPN4mGly22m9nOSG2L7PQLq0dr2LW9B5o6yAxFpnxcNwhCy4Zatlb2iNMiahe22D_0f0w1vk5moX8zQug7fNp-_h9gboExZAzelpNZZQ2YEHaNgZTkBj8P2v6oamvc9ORxET2TcCz9R7aBBtAhSDcBmF0yln9ZMB-NSBVtfZR3uRe40A-w8Mk_kr5KOzdk6Nml_BKF8-hDOkEMhjP2G-mQ8gn62OnLLhqnJ1-Zw1wEyBcBzxoQNUuzESDdrljiSGuyQH7I_8h0xQ_A1F2JsH850hCd0T388PssgcyvrR4gwmMOlWl6YsSScU1bSu1Jxv9Zspr0_b61sW1fe96RZFJfjY1Whniozql6du0Jc8znU5I9s4xwpdmqdndJYYoreIbh1aInS8WbudOb3UjfIez_YI6Wrfb0MekY9_jsX1u0YSpr-OdtIy0w9fqxez09m98gztOVYWyyJlboatkBaaat48evzwXx135XOOfqB5W22q9yb94aMB8m2M7UilIavrre9jg_InsVRmaBZ-m_4ud9cMq0R_fmiSU5viwzVf8j_m63UzVVgR5Y2ftBMxStsp-Xi1iybSm-pWyyZfaabY-QfQBcj2ar33oSanqc3Ott6Uvc9boxf1tV2mIymrVXzZYhs94zRft2g47xnxxUZ2ncBpM3FapX4e9tIn2t9Vc3VrpSaapFJbZ7Y7l1l2MXwezQWtqrWnxlqofh7nOX9cy1z6ed92ezcylnssvzM_dI866ReVzUlIWti6WVUcfdR9tY679OcsZMo4x617v5O0sS0iny3qOkq3som4qs7jRjcno3Xw8xsRsbrSJ3c3ubB8Ow-mQ_zQ4MF-wxXxq_4V6BebQ-lp_O-uXna5z-_Bp2j-YJqXBz_ydmRYojIun-j81RnFJ7iXliynmBgYrqShzxg'
+    },
+    params: { fields: 'id, name, mimeType, webViewLink, webContentLink' },
+    validateStatus: [Function (anonymous)],
+    retry: true,
+    responseType: 'unknown',
+    errorRedactor: [Function: defaultErrorRedactor],
+    retryConfig: {
+      currentRetryAttempt: 0,
+      retry: 3,
+      httpMethodsToRetry: [Array],
+      noResponseRetries: 2,
+      statusCodesToRetry: [Array]
+    }
+  },
+  response: {
+    config: {
+      url: 'https://www.googleapis.com/drive/v3/files/1ABcExampleID2?fields=id%2C%20name%2C%20mimeType%2C%20webViewLink%2C%20webContentLink',
+      method: 'GET',
+      userAgentDirectives: [Array],
+      paramsSerializer: [Function (anonymous)],
+      headers: [Object],
+      params: [Object],
+      validateStatus: [Function (anonymous)],
+      retry: true,
+      responseType: 'unknown',
+      errorRedactor: [Function: defaultErrorRedactor]
+    },
+    data: { error: [Object] },
+    headers: {
+      'alt-svc': 'h3=":443"; ma=2592000,h3-29=":443"; ma=2592000',
+      'cache-control': 'private, max-age=0',
+      'content-encoding': 'gzip',
+      'content-type': 'application/json; charset=UTF-8',
+      date: 'Mon, 16 Feb 2026 02:12:36 GMT',
+      expires: 'Mon, 16 Feb 2026 02:12:36 GMT',
+      server: 'ESF',
+      'transfer-encoding': 'chunked',
+      vary: 'Origin, X-Origin',
+      'x-content-type-options': 'nosniff',
+      'x-frame-options': 'SAMEORIGIN',
+      'x-xss-protection': '0'
+    },
+    status: 404,
+    statusText: 'Not Found',
+    request: {
+      responseURL: 'https://www.googleapis.com/drive/v3/files/1ABcExampleID2?fields=id%2C%20name%2C%20mimeType%2C%20webViewLink%2C%20webContentLink'
+    }
+  },
+  error: undefined,
+  status: 404,
+  code: 404,
+  errors: [
+    {
+      message: 'File not found: 1ABcExampleID2.',
+      domain: 'global',
+      reason: 'notFound',
+      location: 'fileId',
+      locationType: 'parameter'
+    }
+  ],
+  [Symbol(gaxios-gaxios-error)]: '6.2.0'
+}
+{
+  message: '❌ Falló acceso a imagen 1ABcExampleID2',
+  level: 'error',
+  timestamp: '2026-02-16T02:12:36.312Z'
+}
+📝 Total operaciones a ejecutar: 8
+📝 Aplicando lote 1/1 (12 sub-operaciones)...
+✅ Imágenes privadas procesadas y tablas llenadas
+📤 Compartiendo documento con 2 usuario(s)...
+✅ Documento compartido (incluyendo acceso público)
+
+✅ SUCCESSO - Documento creado!
+📄 ID del documento: 1DTMYeHoNdNNbMUJTk2C05gaJYGY9wDmFRMoIYLMw1KU
+🔗 URL del documento: https://docs.google.com/document/d/1DTMYeHoNdNNbMUJTk2C05gaJYGY9wDmFRMoIYLMw1KU/edit
+
+✨ Prueba completada exitosamente!

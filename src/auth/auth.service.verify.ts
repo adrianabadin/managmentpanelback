@@ -59,15 +59,11 @@ export class AuthVerifyModule {
     }
     async jwtVerify(payload:jwt.JwtPayload,done:(...args:any)=>void){
         try{
-            let user = null
             if (payload === undefined) return done(new JWTMissing(),false)
-                user=await this.prisma.users.findUnique({where:{id:(payload as any).id,isActive:true },include:{DepartmentUsers:{include:{Departments:true}} }})    
-                if (user === null) return done(new UserDoesntExists(),false)
-            if (user instanceof PrismaError) return done(user,false)
-            else {
-                this.service.jwtIssuance(user.id)
-                return done(null,user)
-            }
+            const user = await this.prisma.users.findUnique({where:{id:(payload as any).id,isActive:true },include:{DepartmentUsers:{include:{Departments:true}} }})
+            if (user === null) return done(new UserDoesntExists(),false)
+            this.service.jwtIssuance(user.id)
+            return done(null,user)
         }catch(err){
             return done(err,false)
         }
